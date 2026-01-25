@@ -1,0 +1,75 @@
+USE scholarmatch_db;
+CREATE TABLE users (
+  user_id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(100) UNIQUE,
+  password VARCHAR(255),
+  role ENUM('student','admin') DEFAULT 'student'
+);
+
+CREATE TABLE student_profile (
+  student_id INT PRIMARY KEY,
+  education_level VARCHAR(50),
+  marks INT,
+  category VARCHAR(20),
+  income INT,
+  state VARCHAR(50),
+  district VARCHAR(50),
+  FOREIGN KEY (student_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE scholarships (
+  scholarship_id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(150),
+  description TEXT,
+  deadline DATE,
+  status ENUM('active','inactive') DEFAULT 'active'
+);
+
+CREATE TABLE eligibility_rules (
+  rule_id INT AUTO_INCREMENT PRIMARY KEY,
+  scholarship_id INT,
+  field_name VARCHAR(50),
+  operator VARCHAR(5),
+  value VARCHAR(50),
+  FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id)
+);
+
+CREATE TABLE applications (
+  application_id INT AUTO_INCREMENT PRIMARY KEY,
+  student_id INT,
+  scholarship_id INT,
+  status ENUM('applied','approved','rejected') DEFAULT 'applied',
+  applied_on DATE,
+  FOREIGN KEY (student_id) REFERENCES users(user_id),
+  FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id)
+);
+
+INSERT INTO users (name, email, password, role)
+VALUES
+('Ravi Patel','ravi@gmail.com','12345','student'),
+('Admin','admin@gmail.com','admin123','admin');
+
+INSERT INTO student_profile
+(student_id, education_level, marks, category, income, state, district)
+VALUES
+(1,'UG',72,'SC',220000,'Gujarat','Ahmedabad');
+
+INSERT INTO scholarships (title, description, deadline, status)
+VALUES
+('Post Matric SC Scholarship',
+ 'Scholarship for SC category UG students',
+ '2026-03-31',
+ 'active');
+ 
+ INSERT INTO eligibility_rules
+(scholarship_id, field_name, operator, value)
+VALUES
+(1,'income','<=','250000'),
+(1,'category','=','SC'),
+(1,'marks','>=','60');
+
+INSERT INTO applications
+(student_id, scholarship_id, status, applied_on)
+VALUES
+(1,1,'applied','2026-01-24');
