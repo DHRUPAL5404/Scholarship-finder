@@ -1,84 +1,34 @@
+/* ======================================
+   1. CREATE & USE DATABASE
+====================================== */
+CREATE DATABASE IF NOT EXISTS scholarmatch_db;
 USE scholarmatch_db;
-CREATE TABLE users (
-  user_id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(100),
-  email VARCHAR(100) UNIQUE,
-  password VARCHAR(255),
-  role ENUM('student','admin') DEFAULT 'student'
-);
 
-CREATE TABLE student_profile (
-  student_id INT PRIMARY KEY,
-  education_level VARCHAR(50),
-  marks INT,
-  category VARCHAR(20),
-  income INT,
-  state VARCHAR(50),
-  district VARCHAR(50),
-  FOREIGN KEY (student_id) REFERENCES users(user_id)
-);
-
-CREATE TABLE scholarships (
-  scholarship_id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(150),
-  description TEXT,
-  deadline DATE,
-  status ENUM('active','inactive') DEFAULT 'active'
-);
-
-CREATE TABLE eligibility_rules (
-  rule_id INT AUTO_INCREMENT PRIMARY KEY,
-  scholarship_id INT,
-  field_name VARCHAR(50),
-  operator VARCHAR(5),
-  value VARCHAR(50),
-  FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id)
-);
-
-CREATE TABLE applications (
-  application_id INT AUTO_INCREMENT PRIMARY KEY,
-  student_id INT,
-  scholarship_id INT,
-  status ENUM('applied','approved','rejected') DEFAULT 'applied',
-  applied_on DATE,
-  FOREIGN KEY (student_id) REFERENCES users(user_id),
-  FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id)
-);
-
-INSERT INTO users (name, email, password, role)
-VALUES
-('Ravi Patel','ravi@gmail.com','12345','student'),
-('Admin','admin@gmail.com','admin123','admin');
-
-INSERT INTO student_profile
-(student_id, education_level, marks, category, income, state, district)
-VALUES
-(1,'UG',72,'SC',220000,'Gujarat','Ahmedabad');
-
-INSERT INTO scholarships (title, description, deadline, status)
-VALUES
-('Post Matric SC Scholarship',
- 'Scholarship for SC category UG students',
- '2026-03-31',
- 'active');
- 
- INSERT INTO eligibility_rules
-(scholarship_id, field_name, operator, value)
-VALUES
-(1,'income','<=','250000'),
-(1,'category','=','SC'),
-(1,'marks','>=','60');
-
-INSERT INTO applications
-(student_id, scholarship_id, status, applied_on)
-VALUES
-(1,1,'applied','2026-01-24');
-
+/* ======================================
+   2. DROP EXISTING TABLES (ORDER MATTERS)
+====================================== */
+DROP TABLE IF EXISTS eligibility_rules;
+DROP TABLE IF EXISTS scholarships;
 DROP TABLE IF EXISTS student_profile;
+DROP TABLE IF EXISTS users;
 
+/* ======================================
+   3. USERS TABLE
+====================================== */
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('student','admin') DEFAULT 'student'
+);
+
+/* ======================================
+   4. STUDENT PROFILE TABLE
+====================================== */
 CREATE TABLE student_profile (
     profile_id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT UNIQUE,
+    user_id INT UNIQUE NOT NULL,
     education_level VARCHAR(50) NOT NULL,
     course VARCHAR(100) NOT NULL,
     current_year VARCHAR(20) NOT NULL,
@@ -93,11 +43,24 @@ CREATE TABLE student_profile (
     minority_status ENUM('Yes','No') NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
-DROP TABLE eligibility_rules;
+
+/* ======================================
+   5. SCHOLARSHIPS TABLE
+====================================== */
+CREATE TABLE scholarships (
+    scholarship_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(150) NOT NULL,
+    description TEXT,
+    deadline DATE,
+    status ENUM('active','inactive') DEFAULT 'active'
+);
+
+/* ======================================
+   6. ELIGIBILITY RULES TABLE
+====================================== */
 CREATE TABLE eligibility_rules (
     rule_id INT AUTO_INCREMENT PRIMARY KEY,
     scholarship_id INT NOT NULL,
-
     field_name ENUM(
         'marks',
         'family_income',
@@ -110,21 +73,63 @@ CREATE TABLE eligibility_rules (
         'disability_percent',
         'age'
     ) NOT NULL,
-
     operator ENUM('=','>=','<=','>','<') NOT NULL,
     value VARCHAR(100) NOT NULL,
-
-    FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id)
-    ON DELETE CASCADE
+    FOREIGN KEY (scholarship_id)
+        REFERENCES scholarships(scholarship_id)
+        ON DELETE CASCADE
 );
 
+/* ======================================
+   7. SAMPLE DATA
+====================================== */
+
+-- Users
+INSERT INTO users (name, email, password, role) VALUES
+('Ravi Patel','ravi@gmail.com','12345','student'),
+('Admin','admin@gmail.com','admin123','admin');
+
+-- Student Profile
+INSERT INTO student_profile
+(user_id, education_level, course, current_year, marks, family_income, category,
+ gender, state, institution_type, age, disability_percent, minority_status)
+VALUES
+(1,'UG','BSc IT','3rd Year',72,220000,'SC',
+ 'Male','Gujarat','Government',20,0,'No');
+
+-- Scholarships
+INSERT INTO scholarships (title, description, deadline, status) VALUES
+('Post Matric SC Scholarship',
+ 'Scholarship for SC category UG students',
+ '2026-03-31',
+ 'active');
+
+-- Eligibility Rules
 INSERT INTO eligibility_rules (scholarship_id, field_name, operator, value) VALUES
-(1, 'marks', '>=', '60'),
-(1, 'family_income', '<=', '250000'),
-(1, 'category', '=', 'SC'),
-(1, 'minority_status', '=', 'No');
+(1,'marks','>=','60'),
+(1,'family_income','<=','250000'),
+(1,'category','=','SC'),
+(1,'minority_status','=','No');
 
-
+/* ======================================
+   8. VIEW STUDENT PROFILE
+====================================== */
 SELECT u.name, sp.*
 FROM student_profile sp
 JOIN users u ON u.user_id = sp.user_id;
+
+/* ======================================
+   9. ELIGIBLE SCHOLARSHIPS QUERY
+   (RULE-BASED MATCHING)
+====================================== */
+SELECT DISTINCT s.scholarship_id, s.title, s.description, s.deadline
+FROM scholarships s
+JOIN eligibility_rules er ON s.scholarship_id = er.scholarship_id
+JOIN student_profile sp ON sp.user_id = 1
+WHERE s.status = 'active'
+AND (
+    (er.field_name = 'marks' AND sp.marks >= er.value) OR
+    (er.field_name = 'family_income' AND sp.family_income <= er.value) OR
+    (er.field_name = 'category' AND sp.category = er.value) OR
+    (er.field_name = 'minority_status' AND sp.minority_status = er.value)
+);
