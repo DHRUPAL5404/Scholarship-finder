@@ -73,3 +73,58 @@ INSERT INTO applications
 (student_id, scholarship_id, status, applied_on)
 VALUES
 (1,1,'applied','2026-01-24');
+
+DROP TABLE IF EXISTS student_profile;
+
+CREATE TABLE student_profile (
+    profile_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT UNIQUE,
+    education_level VARCHAR(50) NOT NULL,
+    course VARCHAR(100) NOT NULL,
+    current_year VARCHAR(20) NOT NULL,
+    marks INT NOT NULL,
+    family_income INT NOT NULL,
+    category VARCHAR(20) NOT NULL,
+    gender ENUM('Male','Female','Other') NOT NULL,
+    state VARCHAR(50) NOT NULL,
+    institution_type VARCHAR(50) NOT NULL,
+    age INT NOT NULL,
+    disability_percent INT NOT NULL,
+    minority_status ENUM('Yes','No') NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+DROP TABLE eligibility_rules;
+CREATE TABLE eligibility_rules (
+    rule_id INT AUTO_INCREMENT PRIMARY KEY,
+    scholarship_id INT NOT NULL,
+
+    field_name ENUM(
+        'marks',
+        'family_income',
+        'category',
+        'gender',
+        'state',
+        'education_level',
+        'institution_type',
+        'minority_status',
+        'disability_percent',
+        'age'
+    ) NOT NULL,
+
+    operator ENUM('=','>=','<=','>','<') NOT NULL,
+    value VARCHAR(100) NOT NULL,
+
+    FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id)
+    ON DELETE CASCADE
+);
+
+INSERT INTO eligibility_rules (scholarship_id, field_name, operator, value) VALUES
+(1, 'marks', '>=', '60'),
+(1, 'family_income', '<=', '250000'),
+(1, 'category', '=', 'SC'),
+(1, 'minority_status', '=', 'No');
+
+
+SELECT u.name, sp.*
+FROM student_profile sp
+JOIN users u ON u.user_id = sp.user_id;
