@@ -587,7 +587,16 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="">Select District</option>
     </select><br><br>
     
-    <input type="text" name="institution_type" placeholder="Institution Type" value="<?= $profile['institution_type'] ?? '' ?>" required><br><br>
+    Institution Type:
+    <select name="institution_type" required>
+        <option value="">Select Institution Type</option>
+        <option value="Government" <?= ($profile && $profile['institution_type']=='Government')?'selected':'' ?>>Government</option>
+        <option value="Private" <?= ($profile && $profile['institution_type']=='Private')?'selected':'' ?>>Private</option>
+        <option value="Government-Aided" <?= ($profile && $profile['institution_type']=='Government-Aided')?'selected':'' ?>>Government-Aided</option>
+        <option value="Autonomous" <?= ($profile && $profile['institution_type']=='Autonomous')?'selected':'' ?>>Autonomous</option>
+        <option value="University" <?= ($profile && $profile['institution_type']=='University')?'selected':'' ?>>University</option>
+    </select><br><br>
+    
     <input type="number" name="age" placeholder="Age" value="<?= $profile['age'] ?? '' ?>" required><br><br>
     <input type="number" name="disability_percent" placeholder="Disability Percent" value="<?= $profile['disability_percent'] ?? '' ?>" required><br><br>
     
