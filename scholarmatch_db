@@ -133,3 +133,8 @@ AND (
     (er.field_name = 'category' AND sp.category = er.value) OR
     (er.field_name = 'minority_status' AND sp.minority_status = er.value)
 );
+ALTER TABLE users
+ADD mobile_number VARCHAR(15) UNIQUE;
+
+ALTER TABLE users
+CHANGE mobile_number mobile VARCHAR(15);
