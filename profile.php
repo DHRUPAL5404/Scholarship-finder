@@ -576,7 +576,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <input type="text" id="current_year" name="current_year" placeholder="Current Year" value="<?= $profile['current_year'] ?? '' ?>" required><br><br>
     </div>
     
+    Marks (%):
     <input type="number" name="marks" placeholder="Marks (%)" value="<?= $profile['marks'] ?? '' ?>" required><br><br>
+    
+    Family Income:
     <input type="number" name="family_income" placeholder="Family Income" value="<?= $profile['family_income'] ?? '' ?>" required><br><br>
     
     Category:
@@ -616,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="University" <?= ($profile && $profile['institution_type']=='University')?'selected':'' ?>>University</option>
     </select><br><br>
     
-    
+    Age:
     <input type="number" name="age" placeholder="Age" value="<?= $profile['age'] ?? '' ?>" required><br><br>
     
     Disability Type:
