@@ -918,3 +918,5 @@ INSERT INTO districts (district_name, state_id) VALUES
 ('Purulia',28),
 ('South 24 Parganas',28),
 ('Uttar Dinajpur',28);
+
+
