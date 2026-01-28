@@ -386,6 +386,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <input type="email" name="email" placeholder="Email" value="<?= $profile['email'] ?? '' ?>" required><br><br>
     
     Education Level:
+    <select id="education_level" name="education_level" onchange="toggleBelow10thDropdown()" required>
         <option value="">Select</option>
         <option value="Below 10th" <?= ($profile && strpos($profile['education_level'], 'Below 10th') !== false)?'selected':'' ?>>Below 10th</option>
         <option value="10th Pass(SSC)" <?= ($profile && $profile['education_level']=='10th Pass')?'selected':'' ?>>10th Pass</option>
@@ -393,6 +394,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="Postgraduate" <?= ($profile && $profile['education_level']=='Postgraduate')?'selected':'' ?>>Postgraduate</option>
         <option value="PhD" <?= ($profile && $profile['education_level']=='PhD')?'selected':'' ?>>PhD</option>
         <option value="Other" <?= ($profile && $profile['education_level']=='Other')?'selected':'' ?>>Other</option>
+    </select><br><br>
     </select><br><br>
     
     <!-- Conditional dropdown for Below 10th -->
@@ -613,6 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="Autonomous" <?= ($profile && $profile['institution_type']=='Autonomous')?'selected':'' ?>>Autonomous</option>
         <option value="University" <?= ($profile && $profile['institution_type']=='University')?'selected':'' ?>>University</option>
     </select><br><br>
+    
     
     <input type="number" name="age" placeholder="Age" value="<?= $profile['age'] ?? '' ?>" required><br><br>
     
