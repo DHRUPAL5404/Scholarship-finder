@@ -93,6 +93,8 @@ if(isset($_POST['save_profile'])){
     $district_id = mysqli_real_escape_string($conn, $_POST['district_id']);
     $institution_type = mysqli_real_escape_string($conn, $_POST['institution_type']);
     $age = mysqli_real_escape_string($conn, $_POST['age']);
+    $full_name = isset($_POST['full_name']) ? mysqli_real_escape_string($conn, $_POST['full_name']) : '';
+    $email = isset($_POST['email']) ? mysqli_real_escape_string($conn, $_POST['email']) : '';
     $disability_type = isset($_POST['disability_type']) ? mysqli_real_escape_string($conn, $_POST['disability_type']) : '';
     $disability_percent = isset($_POST['disability_percent']) && $_POST['disability_percent'] != '' ? mysqli_real_escape_string($conn, $_POST['disability_percent']) : 0;
     $minority_status = mysqli_real_escape_string($conn, $_POST['minority_status']);
@@ -114,6 +116,8 @@ if(isset($_POST['save_profile'])){
                     district_id='$district_id',
                     institution_type='$institution_type',
                     age='$age',
+                    full_name='$full_name',
+                    email='$email',
                     disability_type='$disability_type',
                     disability_percent='$disability_percent',
                     minority_status='$minority_status',
@@ -124,9 +128,9 @@ if(isset($_POST['save_profile'])){
     } else {
         // Insert new profile
         $query = "INSERT INTO student_profile
-                    (user_id, education_level, course, current_year, marks, family_income, category, gender, state_id, district_id, institution_type, age, disability_type, disability_percent, minority_status, parent_name, parent_occupation, parent_contact)
+                    (user_id, education_level, course, current_year, marks, family_income, category, gender, state_id, district_id, institution_type, age, full_name, email, disability_type, disability_percent, minority_status, parent_name, parent_occupation, parent_contact)
                   VALUES
-                    ($user_id, '$education_level', '$course', '$current_year', $marks, $family_income, '$category', '$gender', '$state_id', '$district_id', '$institution_type', $age, '$disability_type', $disability_percent, '$minority_status', '$parent_name', '$parent_occupation', '$parent_contact')";
+                    ($user_id, '$education_level', '$course', '$current_year', $marks, $family_income, '$category', '$gender', '$state_id', '$district_id', '$institution_type', $age, '$full_name', '$email', '$disability_type', $disability_percent, '$minority_status', '$parent_name', '$parent_occupation', '$parent_contact')";
     }
 
     if(mysqli_query($conn, $query)){
@@ -375,8 +379,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <form method="post" action="profile.php">
-   education_level:
-    <select id="education_level" name="education_level" onchange="toggleBelow10thDropdown()" required>
+    Full Name:
+    <input type="text" name="full_name" placeholder="Full Name" value="<?= $profile['full_name'] ?? '' ?>" required><br><br>
+    
+    Email:
+    <input type="email" name="email" placeholder="Email" value="<?= $profile['email'] ?? '' ?>" required><br><br>
+    
+    Education Level:
         <option value="">Select</option>
         <option value="Below 10th" <?= ($profile && strpos($profile['education_level'], 'Below 10th') !== false)?'selected':'' ?>>Below 10th</option>
         <option value="10th Pass(SSC)" <?= ($profile && $profile['education_level']=='10th Pass')?'selected':'' ?>>10th Pass</option>
