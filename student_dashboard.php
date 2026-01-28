@@ -68,6 +68,15 @@ $scholarships_query = "SELECT * FROM scholarships
                        LIMIT $offset, $per_page";
 $scholarships_result = mysqli_query($conn, $scholarships_query);
 
+if(!$scholarships_result) {
+    // If query fails, it might be due to missing columns
+    echo "<div style='background: #ffebee; padding: 20px; color: #c62828; border-radius: 5px; margin: 20px;'>";
+    echo "⚠️ Database Setup Required<br>";
+    echo "Please run: <a href='setup_database.php' style='color: #c62828; text-decoration: underline;'>setup_database.php</a>";
+    echo "</div>";
+    exit();
+}
+
 // Function to determine eligibility
 function checkEligibility($scholarship, $student_profile) {
     $eligibility = array(
@@ -127,10 +136,18 @@ function checkEligibility($scholarship, $student_profile) {
 $states_result = mysqli_query($conn, "SELECT * FROM states ORDER BY state_name");
 
 // Get unique categories
-$categories_result = mysqli_query($conn, "SELECT DISTINCT category FROM scholarships WHERE status='active'");
+$categories_query = "SELECT DISTINCT category FROM scholarships WHERE status='active'";
+$categories_result = mysqli_query($conn, $categories_query);
+if(!$categories_result) {
+    $categories_result = mysqli_query($conn, "SELECT 'General' as category UNION SELECT 'SC' UNION SELECT 'ST' UNION SELECT 'OBC'");
+}
 
 // Get unique education levels
-$education_result = mysqli_query($conn, "SELECT DISTINCT education_level FROM scholarships WHERE status='active'");
+$education_query = "SELECT DISTINCT education_level FROM scholarships WHERE status='active'";
+$education_result = mysqli_query($conn, $education_query);
+if(!$education_result) {
+    $education_result = mysqli_query($conn, "SELECT 'Undergraduate' as education_level UNION SELECT 'Postgraduate' UNION SELECT 'PhD'");
+}
 
 // Check for expiring scholarships (within 7 days)
 $expiring_query = "SELECT COUNT(*) as count FROM scholarships 
