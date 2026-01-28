@@ -19,7 +19,6 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     <li><a href="manage_scholarships.php">Manage Scholarships</a></li>
     <li><a href="add_eligibility_rule.php">Add Eligibility Rules</a></li>
     <li><a href="eligible_students.php">Eligible Students</a></li>
-    <li><a href="view_applications.php">Applications</a></li>
     <li><a href="logout.php">Logout</a></li>
 </ul>
 
