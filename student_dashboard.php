@@ -2,6 +2,9 @@
 session_start();
 include "db.php";
 
+// Set error handling to not throw exceptions initially, we'll handle them
+mysqli_report(MYSQLI_REPORT_OFF);
+
 // Check if user is logged in and is a student
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
     header("Location: login.php");
@@ -61,22 +64,32 @@ if($sort_by == 'title') {
     $order_clause = "created_date DESC";
 }
 
-// Fetch scholarships
-$scholarships_query = "SELECT * FROM scholarships 
-                       WHERE $where_clause 
-                       ORDER BY $order_clause 
-                       LIMIT $offset, $per_page";
-$scholarships_result = @mysqli_query($conn, $scholarships_query);
+// Check if scholarships table exists
+$table_check = mysqli_query($conn, "SELECT 1 FROM scholarships LIMIT 1");
+$setup_needed = false;
 
-if(!$scholarships_result) {
-    // If query fails, it might be due to missing table or columns
-    // Show setup message and create fallback
+if(!$table_check) {
     $setup_needed = true;
-    $scholarships_result = false;
     $total_scholarships = 0;
     $total_pages = 1;
+    $scholarships_result = false;
 } else {
-    $setup_needed = false;
+    // Fetch scholarships
+    $scholarships_query = "SELECT * FROM scholarships 
+                           WHERE $where_clause 
+                           ORDER BY $order_clause 
+                           LIMIT $offset, $per_page";
+    $scholarships_result = mysqli_query($conn, $scholarships_query);
+
+    if(!$scholarships_result) {
+        // If query fails
+        $setup_needed = true;
+        $scholarships_result = false;
+        $total_scholarships = 0;
+        $total_pages = 1;
+    } else {
+        $setup_needed = false;
+    }
 }
 
 // Function to determine eligibility
@@ -137,27 +150,39 @@ function checkEligibility($scholarship, $student_profile) {
 // Fetch states for filter
 $states_result = mysqli_query($conn, "SELECT * FROM states ORDER BY state_name");
 
-// Get unique categories - with error handling
-$categories_result = @mysqli_query($conn, "SELECT DISTINCT category FROM scholarships WHERE status='active'");
-if(!$categories_result || mysqli_num_rows($categories_result) == 0) {
+// Get unique categories - with try-catch error handling
+try {
+    $categories_result = mysqli_query($conn, "SELECT DISTINCT category FROM scholarships WHERE status='active'");
+    if(!$categories_result || mysqli_num_rows($categories_result) == 0) {
+        throw new Exception("No categories found");
+    }
+} catch (Exception $e) {
     // Fallback if table or column doesn't exist
     $categories_result = mysqli_query($conn, "SELECT 'General' as category UNION SELECT 'SC' UNION SELECT 'ST' UNION SELECT 'OBC'");
 }
 
-// Get unique education levels - with error handling
-$education_result = @mysqli_query($conn, "SELECT DISTINCT education_level FROM scholarships WHERE status='active'");
-if(!$education_result || mysqli_num_rows($education_result) == 0) {
+// Get unique education levels - with try-catch error handling
+try {
+    $education_result = mysqli_query($conn, "SELECT DISTINCT education_level FROM scholarships WHERE status='active'");
+    if(!$education_result || mysqli_num_rows($education_result) == 0) {
+        throw new Exception("No education levels found");
+    }
+} catch (Exception $e) {
     // Fallback if table or column doesn't exist
     $education_result = mysqli_query($conn, "SELECT 'Undergraduate' as education_level UNION SELECT 'Postgraduate' UNION SELECT 'PhD'");
 }
 
-// Check for expiring scholarships (within 7 days)
-$expiring_query = "SELECT COUNT(*) as count FROM scholarships 
-                   WHERE status='active' AND deadline <= DATE_ADD(NOW(), INTERVAL 7 DAY) 
-                   AND deadline >= NOW()";
-$expiring_result = mysqli_query($conn, $expiring_query);
-$expiring_row = mysqli_fetch_assoc($expiring_result);
-$expiring_count = $expiring_row['count'];
+// Check for expiring scholarships (within 7 days) - with error handling
+try {
+    $expiring_query = "SELECT COUNT(*) as count FROM scholarships 
+                       WHERE status='active' AND deadline <= DATE_ADD(NOW(), INTERVAL 7 DAY) 
+                       AND deadline >= NOW()";
+    $expiring_result = mysqli_query($conn, $expiring_query);
+    $expiring_row = mysqli_fetch_assoc($expiring_result);
+    $expiring_count = $expiring_row['count'];
+} catch (Exception $e) {
+    $expiring_count = 0;
+}
 ?>
 
 <!DOCTYPE html>
