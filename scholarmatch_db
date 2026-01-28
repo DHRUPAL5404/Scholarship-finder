@@ -138,3 +138,11 @@ ADD mobile_number VARCHAR(15) UNIQUE;
 
 ALTER TABLE users
 CHANGE mobile_number mobile VARCHAR(15);
+
+ALTER TABLE student_profile
+DROP COLUMN state;
+
+CREATE TABLE states (
+  state_id INT AUTO_INCREMENT PRIMARY KEY,
+  state_name VARCHAR(100) NOT NULL
+);
