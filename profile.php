@@ -93,8 +93,12 @@ if(isset($_POST['save_profile'])){
     $district_id = mysqli_real_escape_string($conn, $_POST['district_id']);
     $institution_type = mysqli_real_escape_string($conn, $_POST['institution_type']);
     $age = mysqli_real_escape_string($conn, $_POST['age']);
-    $disability_percent = mysqli_real_escape_string($conn, $_POST['disability_percent']);
+    $disability_type = isset($_POST['disability_type']) ? mysqli_real_escape_string($conn, $_POST['disability_type']) : '';
+    $disability_percent = isset($_POST['disability_percent']) && $_POST['disability_percent'] != '' ? mysqli_real_escape_string($conn, $_POST['disability_percent']) : 0;
     $minority_status = mysqli_real_escape_string($conn, $_POST['minority_status']);
+    $parent_name = isset($_POST['parent_name']) ? mysqli_real_escape_string($conn, $_POST['parent_name']) : '';
+    $parent_occupation = isset($_POST['parent_occupation']) ? mysqli_real_escape_string($conn, $_POST['parent_occupation']) : '';
+    $parent_contact = isset($_POST['parent_contact']) ? mysqli_real_escape_string($conn, $_POST['parent_contact']) : '';
 
     if($profile){
         // Update existing profile
@@ -110,15 +114,19 @@ if(isset($_POST['save_profile'])){
                     district_id='$district_id',
                     institution_type='$institution_type',
                     age='$age',
+                    disability_type='$disability_type',
                     disability_percent='$disability_percent',
-                    minority_status='$minority_status'
+                    minority_status='$minority_status',
+                    parent_name='$parent_name',
+                    parent_occupation='$parent_occupation',
+                    parent_contact='$parent_contact'
                   WHERE user_id=$user_id";
     } else {
         // Insert new profile
         $query = "INSERT INTO student_profile
-                    (user_id, education_level, course, current_year, marks, family_income, category, gender, state_id, district_id, institution_type, age, disability_percent, minority_status)
+                    (user_id, education_level, course, current_year, marks, family_income, category, gender, state_id, district_id, institution_type, age, disability_type, disability_percent, minority_status, parent_name, parent_occupation, parent_contact)
                   VALUES
-                    ($user_id, '$education_level', '$course', '$current_year', $marks, $family_income, '$category', '$gender', '$state_id', '$district_id', '$institution_type', $age, $disability_percent, '$minority_status')";
+                    ($user_id, '$education_level', '$course', '$current_year', $marks, $family_income, '$category', '$gender', '$state_id', '$district_id', '$institution_type', $age, '$disability_type', $disability_percent, '$minority_status', '$parent_name', '$parent_occupation', '$parent_contact')";
     }
 
     if(mysqli_query($conn, $query)){
@@ -598,7 +606,24 @@ document.addEventListener('DOMContentLoaded', function() {
     </select><br><br>
     
     <input type="number" name="age" placeholder="Age" value="<?= $profile['age'] ?? '' ?>" required><br><br>
-    <input type="number" name="disability_percent" placeholder="Disability Percent" value="<?= $profile['disability_percent'] ?? '' ?>" required><br><br>
+    
+    Disability Type:
+    <select name="disability_type">
+        <option value="">Select Disability Type (if any)</option>
+        <option value="None" <?= ($profile && $profile['disability_type']=='None')?'selected':'' ?>>None</option>
+        <option value="Physical Disability" <?= ($profile && $profile['disability_type']=='Physical Disability')?'selected':'' ?>>Physical Disability</option>
+        <option value="Visual Impairment" <?= ($profile && $profile['disability_type']=='Visual Impairment')?'selected':'' ?>>Visual Impairment</option>
+        <option value="Hearing Impairment" <?= ($profile && $profile['disability_type']=='Hearing Impairment')?'selected':'' ?>>Hearing Impairment</option>
+        <option value="Speech & Language Disability" <?= ($profile && $profile['disability_type']=='Speech & Language Disability')?'selected':'' ?>>Speech & Language Disability</option>
+        <option value="Intellectual Disability" <?= ($profile && $profile['disability_type']=='Intellectual Disability')?'selected':'' ?>>Intellectual Disability</option>
+        <option value="Mental Illness" <?= ($profile && $profile['disability_type']=='Mental Illness')?'selected':'' ?>>Mental Illness</option>
+        <option value="Multiple Disabilities" <?= ($profile && $profile['disability_type']=='Multiple Disabilities')?'selected':'' ?>>Multiple Disabilities</option>
+        <option value="Specific Learning Disability" <?= ($profile && $profile['disability_type']=='Specific Learning Disability')?'selected':'' ?>>Specific Learning Disability</option>
+        <option value="Other" <?= ($profile && $profile['disability_type']=='Other')?'selected':'' ?>>Other</option>
+    </select><br><br>
+    
+    Disability Percent (if any):
+    <input type="number" name="disability_percent" placeholder="Disability Percent (0-100)" value="<?= $profile['disability_percent'] ?? '' ?>" min="0" max="100"><br><br>
     
     Minority Status: 
     <select name="minority_status" required>
@@ -606,6 +631,15 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="Yes" <?= ($profile && $profile['minority_status']=='Yes')?'selected':'' ?>>Yes</option>
         <option value="No" <?= ($profile && $profile['minority_status']=='No')?'selected':'' ?>>No</option>
     </select><br><br>
+    
+    Parent / Guardian Name:
+    <input type="text" name="parent_name" placeholder="Parent / Guardian Name" value="<?= $profile['parent_name'] ?? '' ?>"><br><br>
+    
+    Parent / Guardian Occupation:
+    <input type="text" name="parent_occupation" placeholder="Parent / Guardian Occupation" value="<?= $profile['parent_occupation'] ?? '' ?>"><br><br>
+    
+    Parent / Guardian Contact:
+    <input type="tel" name="parent_contact" placeholder="Parent / Guardian Contact (Mobile / Phone)" value="<?= $profile['parent_contact'] ?? '' ?>"><br><br>
     
     <button type="submit" name="save_profile">Save Profile</button>
 </form>
