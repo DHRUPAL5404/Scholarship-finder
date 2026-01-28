@@ -66,15 +66,17 @@ $scholarships_query = "SELECT * FROM scholarships
                        WHERE $where_clause 
                        ORDER BY $order_clause 
                        LIMIT $offset, $per_page";
-$scholarships_result = mysqli_query($conn, $scholarships_query);
+$scholarships_result = @mysqli_query($conn, $scholarships_query);
 
 if(!$scholarships_result) {
-    // If query fails, it might be due to missing columns
-    echo "<div style='background: #ffebee; padding: 20px; color: #c62828; border-radius: 5px; margin: 20px;'>";
-    echo "⚠️ Database Setup Required<br>";
-    echo "Please run: <a href='setup_database.php' style='color: #c62828; text-decoration: underline;'>setup_database.php</a>";
-    echo "</div>";
-    exit();
+    // If query fails, it might be due to missing table or columns
+    // Show setup message and create fallback
+    $setup_needed = true;
+    $scholarships_result = false;
+    $total_scholarships = 0;
+    $total_pages = 1;
+} else {
+    $setup_needed = false;
 }
 
 // Function to determine eligibility
@@ -135,17 +137,17 @@ function checkEligibility($scholarship, $student_profile) {
 // Fetch states for filter
 $states_result = mysqli_query($conn, "SELECT * FROM states ORDER BY state_name");
 
-// Get unique categories
-$categories_query = "SELECT DISTINCT category FROM scholarships WHERE status='active'";
-$categories_result = mysqli_query($conn, $categories_query);
-if(!$categories_result) {
+// Get unique categories - with error handling
+$categories_result = @mysqli_query($conn, "SELECT DISTINCT category FROM scholarships WHERE status='active'");
+if(!$categories_result || mysqli_num_rows($categories_result) == 0) {
+    // Fallback if table or column doesn't exist
     $categories_result = mysqli_query($conn, "SELECT 'General' as category UNION SELECT 'SC' UNION SELECT 'ST' UNION SELECT 'OBC'");
 }
 
-// Get unique education levels
-$education_query = "SELECT DISTINCT education_level FROM scholarships WHERE status='active'";
-$education_result = mysqli_query($conn, $education_query);
-if(!$education_result) {
+// Get unique education levels - with error handling
+$education_result = @mysqli_query($conn, "SELECT DISTINCT education_level FROM scholarships WHERE status='active'");
+if(!$education_result || mysqli_num_rows($education_result) == 0) {
+    // Fallback if table or column doesn't exist
     $education_result = mysqli_query($conn, "SELECT 'Undergraduate' as education_level UNION SELECT 'Postgraduate' UNION SELECT 'PhD'");
 }
 
@@ -666,9 +668,18 @@ $expiring_count = $expiring_row['count'];
         Showing <strong><?php echo ($offset + 1); ?> - <?php echo min($offset + $per_page, $total_scholarships); ?></strong> of <strong><?php echo $total_scholarships; ?></strong> scholarships
     </div>
     
+    <!-- Setup Alert -->
+    <?php if(isset($setup_needed) && $setup_needed): ?>
+    <div class="alert" style="background: #ffebee; border-color: #ef5350; color: #c62828;">
+        ⚠️ <strong>Database Setup Required</strong><br>
+        The scholarships table needs to be created. 
+        <a href="setup_database.php" style="color: #c62828; text-decoration: underline; font-weight: bold;">Click here to set up the database automatically</a>
+    </div>
+    <?php endif; ?>
+    
     <!-- Scholarships Display -->
     <div id="cardView">
-        <?php if($total_scholarships > 0): ?>
+        <?php if($total_scholarships > 0 && $scholarships_result): ?>
         <div class="scholarships-grid">
             <?php while($scholarship = mysqli_fetch_assoc($scholarships_result)): ?>
             <?php 
