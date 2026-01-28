@@ -89,7 +89,8 @@ if(isset($_POST['save_profile'])){
     $family_income = mysqli_real_escape_string($conn, $_POST['family_income']);
     $category = mysqli_real_escape_string($conn, $_POST['category']);
     $gender = mysqli_real_escape_string($conn, $_POST['gender']);
-    $state = mysqli_real_escape_string($conn, $_POST['state']);
+    $state_id = mysqli_real_escape_string($conn, $_POST['state_id']);
+    $district_id = mysqli_real_escape_string($conn, $_POST['district_id']);
     $institution_type = mysqli_real_escape_string($conn, $_POST['institution_type']);
     $age = mysqli_real_escape_string($conn, $_POST['age']);
     $disability_percent = mysqli_real_escape_string($conn, $_POST['disability_percent']);
@@ -105,7 +106,8 @@ if(isset($_POST['save_profile'])){
                     family_income='$family_income',
                     category='$category',
                     gender='$gender',
-                    state='$state',
+                    state_id='$state_id',
+                    district_id='$district_id',
                     institution_type='$institution_type',
                     age='$age',
                     disability_percent='$disability_percent',
@@ -114,9 +116,9 @@ if(isset($_POST['save_profile'])){
     } else {
         // Insert new profile
         $query = "INSERT INTO student_profile
-                    (user_id, education_level, course, current_year, marks, family_income, category, gender, state, institution_type, age, disability_percent, minority_status)
+                    (user_id, education_level, course, current_year, marks, family_income, category, gender, state_id, district_id, institution_type, age, disability_percent, minority_status)
                   VALUES
-                    ($user_id, '$education_level', '$course', '$current_year', $marks, $family_income, '$category', '$gender', '$state', '$institution_type', $age, $disability_percent, '$minority_status')";
+                    ($user_id, '$education_level', '$course', '$current_year', $marks, $family_income, '$category', '$gender', '$state_id', '$district_id', '$institution_type', $age, $disability_percent, '$minority_status')";
     }
 
     if(mysqli_query($conn, $query)){
@@ -335,11 +337,10 @@ function toggleOtherField(dropdownId, otherFieldId) {
     }
 }
 
-// Cascade dropdowns for State, District, Sub-District
+// Cascade dropdowns for State, District
 document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state');
     const districtSelect = document.getElementById('district');
-    const subDistrictSelect = document.getElementById('sub_district');
     
     // Load states on page load
     fetch('get_states.php')
@@ -356,29 +357,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     districtSelect.innerHTML = '<option value="">Select District</option>' + data;
                     districtSelect.disabled = false;
-                    subDistrictSelect.innerHTML = '<option value="">Select Sub-District</option>';
-                    subDistrictSelect.disabled = true;
                 });
         } else {
             districtSelect.innerHTML = '<option value="">Select District</option>';
             districtSelect.disabled = true;
-            subDistrictSelect.innerHTML = '<option value="">Select Sub-District</option>';
-            subDistrictSelect.disabled = true;
-        }
-    });
-    
-    // Load sub-districts when district changes
-    districtSelect.addEventListener('change', function() {
-        if(this.value) {
-            fetch('get_sub_districts.php?district_id=' + this.value)
-                .then(res => res.text())
-                .then(data => {
-                    subDistrictSelect.innerHTML = '<option value="">Select Sub-District</option>' + data;
-                    subDistrictSelect.disabled = false;
-                });
-        } else {
-            subDistrictSelect.innerHTML = '<option value="">Select Sub-District</option>';
-            subDistrictSelect.disabled = true;
         }
     });
 });
@@ -603,11 +585,6 @@ document.addEventListener('DOMContentLoaded', function() {
     District:
     <select id="district" name="district_id" disabled required>
         <option value="">Select District</option>
-    </select><br><br>
-    
-    Sub-District:
-    <select id="sub_district" name="sub_district_id" disabled required>
-        <option value="">Select Sub-District</option>
     </select><br><br>
     
     <input type="text" name="institution_type" placeholder="Institution Type" value="<?= $profile['institution_type'] ?? '' ?>" required><br><br>
