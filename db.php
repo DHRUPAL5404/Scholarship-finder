@@ -1,5 +1,4 @@
 <?php
-<<<<<<< HEAD
 // Database Configuration
 $servername = "localhost";
 $username = "root";
@@ -16,13 +15,3 @@ if (!$conn) {
 
 mysqli_set_charset($conn, "utf8mb4");
 ?>
-=======
-$conn = mysqli_connect("localhost","root","","scholarmatch_db");
-
-if(!$conn){
-    die("Database connection failed");
-}
-?>
-
-//connection to the Database
->>>>>>> dhruti
