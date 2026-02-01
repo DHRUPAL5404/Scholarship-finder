@@ -14,39 +14,26 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'];
 
-// Fetch student profile
-$profile = mysqli_fetch_assoc(
-    mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$user_id")
-);
+// Fetch student profile (safer)
+$profile_query = mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=" . intval($user_id));
+$profile = $profile_query ? mysqli_fetch_assoc($profile_query) : null;
+if (!$profile) {
+    $profile = [
+        'category' => null,
+        'marks' => 0,
+        'family_income' => 0,
+        'education_level' => null,
+        'state_id' => null
+    ];
+}
 
 // Get filter values
-$category_filter = isset($_GET['category']) ? $_GET['category'] : '';
-$education_filter = isset($_GET['education']) ? $_GET['education'] : '';
-$state_filter = isset($_GET['state']) ? $_GET['state'] : '';
-$search_query = isset($_GET['search']) ? mysqli_real_escape_string($conn, $_GET['search']) : '';
-$sort_by = isset($_GET['sort']) ? $_GET['sort'] : 'deadline'; // deadline or title
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
 
 // Build scholarship query
 $where_conditions = array("status = 'active'");
-
-if($search_query) {
-    $where_conditions[] = "(title LIKE '%$search_query%' OR description LIKE '%$search_query%')";
-}
-
-if($category_filter) {
-    $where_conditions[] = "(category LIKE '%$category_filter%' OR category = 'General')";
-}
-
-if($education_filter) {
-    $where_conditions[] = "education_level LIKE '%$education_filter%'";
-}
-
-if($state_filter) {
-    $where_conditions[] = "state_id = '$state_filter'";
-}
 
 $where_clause = implode(" AND ", $where_conditions);
 
@@ -58,11 +45,6 @@ $total_pages = ceil($total_scholarships / $per_page);
 
 // Sort options
 $order_clause = "deadline ASC";
-if($sort_by == 'title') {
-    $order_clause = "title ASC";
-} elseif($sort_by == 'newest') {
-    $order_clause = "created_date DESC";
-}
 
 // Check if scholarships table exists
 $table_check = mysqli_query($conn, "SELECT 1 FROM scholarships LIMIT 1");
@@ -74,76 +56,59 @@ if(!$table_check) {
     $total_pages = 1;
     $scholarships_result = false;
 } else {
-    // Fetch scholarships
-    $scholarships_query = "SELECT * FROM scholarships 
-                           WHERE $where_clause 
-                           ORDER BY $order_clause 
-                           LIMIT $offset, $per_page";
+    // Fetch scholarships with WHERE and ORDER applied
+    $scholarships_query = "SELECT * FROM scholarships WHERE $where_clause ORDER BY $order_clause LIMIT $offset, $per_page";
     $scholarships_result = mysqli_query($conn, $scholarships_query);
 
     if(!$scholarships_result) {
-        // If query fails
-        $setup_needed = true;
-        $scholarships_result = false;
-        $total_scholarships = 0;
         $total_pages = 1;
+        $scholarships = [];
     } else {
-        $setup_needed = false;
+        $scholarships = [];
+        while($row = mysqli_fetch_assoc($scholarships_result)) {
+            $scholarships[] = $row;
+        }
     }
 }
 
-// Function to determine eligibility
+// Function to determine eligibility (safe checks)
 function checkEligibility($scholarship, $student_profile) {
-    $eligibility = array(
-        'status' => 'eligible', // eligible, not_eligible, partial
-        'issues' => array(),
-        'percentage' => 100
-    );
-    
-    // Check category eligibility
-    if($scholarship['category'] != 'General' && $scholarship['category'] != $student_profile['category']) {
-        if($scholarship['category'] == 'OBC' || $scholarship['category'] == 'SC' || $scholarship['category'] == 'ST') {
-            // These can include General category
-            if(strpos($student_profile['category'], 'General') === false) {
-                $eligibility['issues'][] = "Category mismatch";
-                $eligibility['percentage'] -= 20;
-            }
-        }
+    $eligibility = ['eligible' => true, 'reasons' => []];
+
+    $s_cat = $scholarship['category'] ?? null;
+    $p_cat = $student_profile['category'] ?? null;
+    if ($s_cat && $s_cat !== 'General' && $p_cat !== $s_cat) {
+        $eligibility['eligible'] = false;
+        $eligibility['reasons'][] = 'Category mismatch';
     }
-    
-    // Check marks eligibility
-    if($scholarship['min_marks'] > 0 && $student_profile['marks'] < $scholarship['min_marks']) {
-        $eligibility['issues'][] = "Marks below minimum ({$scholarship['min_marks']}%)";
-        $eligibility['percentage'] -= 30;
+
+    $min_marks = intval($scholarship['min_marks'] ?? 0);
+    $stu_marks = intval($student_profile['marks'] ?? 0);
+    if ($min_marks > 0 && $stu_marks < $min_marks) {
+        $eligibility['eligible'] = false;
+        $eligibility['reasons'][] = 'Insufficient marks';
     }
-    
-    // Check family income eligibility
-    if($scholarship['max_family_income'] > 0 && $student_profile['family_income'] > $scholarship['max_family_income']) {
-        $eligibility['issues'][] = "Family income exceeds limit";
-        $eligibility['percentage'] -= 25;
+
+    $max_income = intval($scholarship['max_family_income'] ?? 0);
+    $stu_income = intval($student_profile['family_income'] ?? 0);
+    if ($max_income > 0 && $stu_income > $max_income) {
+        $eligibility['eligible'] = false;
+        $eligibility['reasons'][] = 'Family income exceeds limit';
     }
-    
-    // Check education level eligibility
-    if($scholarship['education_level'] && strpos($student_profile['education_level'], $scholarship['education_level']) === false) {
-        $eligibility['issues'][] = "Education level mismatch";
-        $eligibility['percentage'] -= 20;
+
+    $req_edu = $scholarship['education_level'] ?? null;
+    $stu_edu = $student_profile['education_level'] ?? null;
+    if ($req_edu && $stu_edu && stripos($req_edu, $stu_edu) === false) {
+        $eligibility['eligible'] = false;
+        $eligibility['reasons'][] = 'Education level mismatch';
     }
-    
-    // Check state eligibility
-    if($scholarship['state_id'] && $scholarship['state_id'] != $student_profile['state_id']) {
-        $eligibility['issues'][] = "Not available in your state";
-        $eligibility['percentage'] -= 50;
+
+    $req_state = $scholarship['state_id'] ?? null;
+    if ($req_state && $req_state != ($student_profile['state_id'] ?? null)) {
+        $eligibility['eligible'] = false;
+        $eligibility['reasons'][] = 'State mismatch';
     }
-    
-    // Determine status based on percentage
-    if($eligibility['percentage'] >= 80) {
-        $eligibility['status'] = 'eligible';
-    } elseif($eligibility['percentage'] >= 50) {
-        $eligibility['status'] = 'partial';
-    } else {
-        $eligibility['status'] = 'not_eligible';
-    }
-    
+
     return $eligibility;
 }
 
@@ -199,7 +164,7 @@ try {
     <!-- Header -->
     <div class="header">
         <div>
-            <h1>📚 Scholarship Dashboard</h1>
+            <h1> Scholarship Dashboard</h1>
             <p style="color: #999; margin-top: 5px;">Welcome, <?php echo htmlspecialchars($user_name); ?></p>
         </div>
         <div class="header-actions">
@@ -211,88 +176,20 @@ try {
     <!-- Alerts -->
     <?php if($expiring_count > 0): ?>
     <div class="alert">
-        ⏰ <strong><?php echo $expiring_count; ?> scholarships</strong> are expiring within the next 7 days!
+         <strong><?php echo $expiring_count; ?> scholarships</strong> are expiring within the next 7 days!
     </div>
     <?php endif; ?>
     
     <?php if(!$profile): ?>
     <div class="alert">
-        ⚠️ Please <a href="profile.php" style="color: inherit; text-decoration: underline;">complete your profile</a> to see accurate eligibility.
+         Please <a href="profile.php" style="color: inherit; text-decoration: underline;">complete your profile</a> to see accurate eligibility.
     </div>
     <?php endif; ?>
-    
-    <!-- Filters -->
-    <div class="filters-section">
-        <h3>🔍 Search & Filter Scholarships</h3>
-        <form method="GET" action="">
-            <div class="filters-grid">
-                <div class="filter-group">
-                    <label>Search by Title/Description</label>
-                    <input type="text" name="search" placeholder="Search scholarships..." value="<?php echo htmlspecialchars($search_query); ?>">
-                </div>
-                
-                <div class="filter-group">
-                    <label>Category</label>
-                    <select name="category">
-                        <option value="">All Categories</option>
-                        <?php while($cat = mysqli_fetch_assoc($categories_result)): ?>
-                        <option value="<?php echo htmlspecialchars($cat['category']); ?>" <?php echo $category_filter == $cat['category'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($cat['category']); ?>
-                        </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                
-                <div class="filter-group">
-                    <label>Education Level</label>
-                    <select name="education">
-                        <option value="">All Levels</option>
-                        <?php while($edu = mysqli_fetch_assoc($education_result)): ?>
-                        <option value="<?php echo htmlspecialchars($edu['education_level']); ?>" <?php echo $education_filter == $edu['education_level'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($edu['education_level']); ?>
-                        </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                
-                <div class="filter-group">
-                    <label>State</label>
-                    <select name="state">
-                        <option value="">All States</option>
-                        <?php while($state = mysqli_fetch_assoc($states_result)): ?>
-                        <option value="<?php echo $state['state_id']; ?>" <?php echo $state_filter == $state['state_id'] ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($state['state_name']); ?>
-                        </option>
-                        <?php endwhile; ?>
-                    </select>
-                </div>
-                
-                <div class="filter-group">
-                    <label>Sort By</label>
-                    <select name="sort">
-                        <option value="deadline" <?php echo $sort_by == 'deadline' ? 'selected' : ''; ?>>Deadline (Nearest First)</option>
-                        <option value="title" <?php echo $sort_by == 'title' ? 'selected' : ''; ?>>Title (A-Z)</option>
-                        <option value="newest" <?php echo $sort_by == 'newest' ? 'selected' : ''; ?>>Newest First</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="filter-buttons">
-                <button type="submit" class="btn btn-primary">🔍 Search</button>
-                <a href="student_dashboard.php" class="btn btn-secondary" style="text-decoration: none; display: inline-block;">↺ Clear Filters</a>
-            </div>
-        </form>
-    </div>
-    
-    <!-- Results Info -->
-    <div class="results-info">
-        Showing <strong><?php echo ($offset + 1); ?> - <?php echo min($offset + $per_page, $total_scholarships); ?></strong> of <strong><?php echo $total_scholarships; ?></strong> scholarships
-    </div>
     
     <!-- Setup Alert -->
     <?php if(isset($setup_needed) && $setup_needed): ?>
     <div class="alert" style="background: #ffebee; border-color: #ef5350; color: #c62828;">
-        ⚠️ <strong>Database Setup Required</strong><br>
+         <strong>Database Setup Required</strong><br>
         The scholarships table needs to be created. 
         <a href="setup_database.php" style="color: #c62828; text-decoration: underline; font-weight: bold;">Click here to set up the database automatically</a>
     </div>
@@ -318,9 +215,9 @@ try {
                     <p><?php echo htmlspecialchars(substr($scholarship['description'], 0, 100)); ?>...</p>
                     
                     <div class="deadline-badge <?php echo $is_urgent ? 'urgent' : ''; ?>">
-                        📅 Deadline: <?php echo date('d M, Y', strtotime($scholarship['deadline'])); ?>
+                         Deadline: <?php echo date('d M, Y', strtotime($scholarship['deadline'])); ?>
                         <?php if($is_urgent && $days_left >= 0): ?>
-                        <br>⏰ <strong><?php echo $days_left; ?> days left</strong>
+                        <br> <strong><?php echo $days_left; ?> days left</strong>
                         <?php endif; ?>
                     </div>
                     
@@ -354,7 +251,7 @@ try {
         </div>
         <?php else: ?>
         <div class="no-scholarships">
-            😕 No scholarships found matching your filters. Try adjusting your search.
+             No scholarships found. Please check back later.
         </div>
         <?php endif; ?>
     </div>
@@ -363,21 +260,21 @@ try {
     <?php if($total_pages > 1): ?>
     <div class="pagination">
         <?php if($page > 1): ?>
-        <a href="?page=1&category=<?php echo urlencode($category_filter); ?>&education=<?php echo urlencode($education_filter); ?>&state=<?php echo urlencode($state_filter); ?>&search=<?php echo urlencode($search_query); ?>&sort=<?php echo urlencode($sort_by); ?>">« First</a>
-        <a href="?page=<?php echo $page-1; ?>&category=<?php echo urlencode($category_filter); ?>&education=<?php echo urlencode($education_filter); ?>&state=<?php echo urlencode($state_filter); ?>&search=<?php echo urlencode($search_query); ?>&sort=<?php echo urlencode($sort_by); ?>">‹ Previous</a>
+        <a href="?page=1">« First</a>
+        <a href="?page=<?php echo $page-1; ?>">‹ Previous</a>
         <?php endif; ?>
         
         <?php for($i = 1; $i <= $total_pages; $i++): ?>
             <?php if($i == $page): ?>
             <span class="active"><?php echo $i; ?></span>
             <?php else: ?>
-            <a href="?page=<?php echo $i; ?>&category=<?php echo urlencode($category_filter); ?>&education=<?php echo urlencode($education_filter); ?>&state=<?php echo urlencode($state_filter); ?>&search=<?php echo urlencode($search_query); ?>&sort=<?php echo urlencode($sort_by); ?>"><?php echo $i; ?></a>
+            <a href="?page=<?php echo $i; ?>"><?php echo $i; ?></a>
             <?php endif; ?>
         <?php endfor; ?>
         
         <?php if($page < $total_pages): ?>
-        <a href="?page=<?php echo $page+1; ?>&category=<?php echo urlencode($category_filter); ?>&education=<?php echo urlencode($education_filter); ?>&state=<?php echo urlencode($state_filter); ?>&search=<?php echo urlencode($search_query); ?>&sort=<?php echo urlencode($sort_by); ?>">Next ›</a>
-        <a href="?page=<?php echo $total_pages; ?>&category=<?php echo urlencode($category_filter); ?>&education=<?php echo urlencode($education_filter); ?>&state=<?php echo urlencode($state_filter); ?>&search=<?php echo urlencode($search_query); ?>&sort=<?php echo urlencode($sort_by); ?>">Last »</a>
+        <a href="?page=<?php echo $page+1; ?>">Next ›</a>
+        <a href="?page=<?php echo $total_pages; ?>">Last »</a>
         <?php endif; ?>
     </div>
     <?php endif; ?>

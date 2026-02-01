@@ -164,7 +164,7 @@ $all_good = $checks['scholarships_table'] && $checks['has_category'] && $checks[
 <body>
 
 <div class="container">
-    <h1>🔍 Database Setup Status</h1>
+    <h1> Database Setup Status</h1>
     
     <div class="status-item <?php echo $checks['scholarships_table'] ? 'pass' : 'fail'; ?>">
         <span>Scholarships Table Exists</span>
@@ -196,9 +196,9 @@ $all_good = $checks['scholarships_table'] && $checks['has_category'] && $checks[
     
     <div class="summary <?php echo $all_good ? 'ready' : 'not-ready'; ?>">
         <?php if($all_good): ?>
-            ✅ Database is fully configured and ready to use!
+             Database is fully configured and ready to use!
         <?php else: ?>
-            ⚠️ Database needs to be set up
+             Database needs to be set up
         <?php endif; ?>
     </div>
     
