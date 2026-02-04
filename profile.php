@@ -1,153 +1,49 @@
 <?php
 session_start();
-include "db.php"; // Database connection
+include "db.php";
 
-// Check if user is logged in and is a student
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
     header("Location: login.php");
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
-$user_name = $_SESSION['user_name'];
 
-// Fetch existing profile (if any)
+// Fetch student profile
 $profile = mysqli_fetch_assoc(
     mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$user_id")
 );
-
-// Handle form submission
-if(isset($_POST['save_profile'])){
-    $education_level = mysqli_real_escape_string($conn, $_POST['education_level']);
-    
-    // If Below 10th is selected, append sub-education level
-    if($education_level == 'Below 10th' && isset($_POST['below_10th_level'])){
-        $below_10th_level = mysqli_real_escape_string($conn, $_POST['below_10th_level']);
-        $education_level = $education_level . ' - ' . $below_10th_level;
-    }
-    
-    // If 10th Pass is selected, append stream
-    if($education_level == '10th Pass(SSC)' && isset($_POST['tenth_stream'])){
-        $tenth_stream = mysqli_real_escape_string($conn, $_POST['tenth_stream']);
-        $education_level = $education_level . ' - ' . $tenth_stream;
-        // If Diploma stream is selected, append the specific diploma course
-        if($tenth_stream == 'Diploma' && isset($_POST['diploma_course'])){
-            $diploma_course = mysqli_real_escape_string($conn, $_POST['diploma_course']);
-            // If Other is selected, use custom input
-            if($diploma_course == 'Other' && isset($_POST['diploma_course_other'])){
-                $diploma_course = mysqli_real_escape_string($conn, $_POST['diploma_course_other']);
-            }
-            $education_level = $education_level . ' - ' . $diploma_course;
-        }
-    }
-    
-    // If Undergraduate is selected, append stream and group/course
-    if($education_level == 'Undergraduate' && isset($_POST['undergrad_stream'])){
-        $undergrad_stream = mysqli_real_escape_string($conn, $_POST['undergrad_stream']);
-        $education_level = $education_level . ' - ' . $undergrad_stream;
-        
-        // If Science stream, append group and course
-        if($undergrad_stream == 'Science' && isset($_POST['science_group'])){
-            $science_group = mysqli_real_escape_string($conn, $_POST['science_group']);
-            $education_level = $education_level . ' - ' . $science_group;
-        }
-        
-        // Append course if selected
-        if(isset($_POST['undergrad_course'])){
-            $undergrad_course = mysqli_real_escape_string($conn, $_POST['undergrad_course']);
-            // If Other is selected, use custom input
-            if($undergrad_course == 'Other' && isset($_POST['undergrad_course_other'])){
-                $undergrad_course = mysqli_real_escape_string($conn, $_POST['undergrad_course_other']);
-            }
-            $education_level = $education_level . ' - ' . $undergrad_course;
-        }
-    }
-    
-    // If Postgraduate is selected, append course
-    if($education_level == 'Postgraduate' && isset($_POST['postgrad_course'])){
-        $postgrad_course = mysqli_real_escape_string($conn, $_POST['postgrad_course']);
-        // If Other is selected, use custom input
-        if($postgrad_course == 'Other' && isset($_POST['postgrad_course_other'])){
-            $postgrad_course = mysqli_real_escape_string($conn, $_POST['postgrad_course_other']);
-        }
-        $education_level = $education_level . ' - ' . $postgrad_course;
-    }
-    
-    // If PhD is selected, append course
-    if($education_level == 'PhD' && isset($_POST['phd_course'])){
-        $phd_course = mysqli_real_escape_string($conn, $_POST['phd_course']);
-        // If Other is selected, use custom input
-        if($phd_course == 'Other' && isset($_POST['phd_course_other'])){
-            $phd_course = mysqli_real_escape_string($conn, $_POST['phd_course_other']);
-        }
-        $education_level = $education_level . ' - ' . $phd_course;
-    }
-    
-    $course = mysqli_real_escape_string($conn, $_POST['course']);
-    $current_year = mysqli_real_escape_string($conn, $_POST['current_year']);
-    $marks = mysqli_real_escape_string($conn, $_POST['marks']);
-    $family_income = mysqli_real_escape_string($conn, $_POST['family_income']);
-    $category = mysqli_real_escape_string($conn, $_POST['category']);
-    $gender = mysqli_real_escape_string($conn, $_POST['gender']);
-    $state_id = mysqli_real_escape_string($conn, $_POST['state_id']);
-    $district_id = mysqli_real_escape_string($conn, $_POST['district_id']);
-    $institution_type = mysqli_real_escape_string($conn, $_POST['institution_type']);
-    $age = mysqli_real_escape_string($conn, $_POST['age']);
-    $full_name = isset($_POST['full_name']) ? mysqli_real_escape_string($conn, $_POST['full_name']) : '';
-    $email = isset($_POST['email']) ? mysqli_real_escape_string($conn, $_POST['email']) : '';
-    $disability_type = isset($_POST['disability_type']) ? mysqli_real_escape_string($conn, $_POST['disability_type']) : '';
-    $disability_percent = isset($_POST['disability_percent']) && $_POST['disability_percent'] != '' ? mysqli_real_escape_string($conn, $_POST['disability_percent']) : 0;
-    $minority_status = mysqli_real_escape_string($conn, $_POST['minority_status']);
-    $parent_name = isset($_POST['parent_name']) ? mysqli_real_escape_string($conn, $_POST['parent_name']) : '';
-    $parent_occupation = isset($_POST['parent_occupation']) ? mysqli_real_escape_string($conn, $_POST['parent_occupation']) : '';
-    $parent_contact = isset($_POST['parent_contact']) ? mysqli_real_escape_string($conn, $_POST['parent_contact']) : '';
-
-    if($profile){
-        // Update existing profile
-        $query = "UPDATE student_profile SET 
-                    education_level='$education_level',
-                    course='$course',
-                    current_year='$current_year',
-                    marks='$marks',
-                    family_income='$family_income',
-                    category='$category',
-                    gender='$gender',
-                    state_id='$state_id',
-                    district_id='$district_id',
-                    institution_type='$institution_type',
-                    age='$age',
-                    full_name='$full_name',
-                    email='$email',
-                    disability_type='$disability_type',
-                    disability_percent='$disability_percent',
-                    minority_status='$minority_status',
-                    parent_name='$parent_name',
-                    parent_occupation='$parent_occupation',
-                    parent_contact='$parent_contact'
-                  WHERE user_id=$user_id";
-    } else {
-        // Insert new profile
-        $query = "INSERT INTO student_profile
-                    (user_id, education_level, course, current_year, marks, family_income, category, gender, state_id, district_id, institution_type, age, full_name, email, disability_type, disability_percent, minority_status, parent_name, parent_occupation, parent_contact)
-                  VALUES
-                    ($user_id, '$education_level', '$course', '$current_year', $marks, $family_income, '$category', '$gender', '$state_id', '$district_id', '$institution_type', $age, '$full_name', '$email', '$disability_type', $disability_percent, '$minority_status', '$parent_name', '$parent_occupation', '$parent_contact')";
-    }
-
-    if(mysqli_query($conn, $query)){
-        echo "<p style='color:green;'>Profile saved successfully!</p>";
-        // Refresh profile
-        $profile = mysqli_fetch_assoc(
-            mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$user_id")
-        );
-    } else {
-        echo "<p style='color:red;'>Error: ".mysqli_error($conn)."</p>";
-    }
-}
 ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Profile - ScholarMatch</title>
+    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+</head>
+<body>
 
-<h2>Student Profile</h2>
+    <!-- Navbar -->
+    <nav>
+        <ul>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="index.php#how-it-works">How It Works</a></li>
+            <li><a href="index.php#features">Features</a></li>
+            <?php if(isset($_SESSION['user_id'])): ?>
+                <li><a href="student_dashboard.php">Dashboard</a></li>
+                <li><a href="logout.php">Logout</a></li>
+            <?php else: ?>
+                <li><a href="login.php">Login</a></li>
+                <li><a href="register.php">Register</a></li>
+            <?php endif; ?>
+        </ul>
+    </nav>
 
-<script>
+    <div class="container">
+        <h2>Update Your Profile</h2>
+        
+        <script>
 function toggleBelow10thDropdown() {
     var educationLevel = document.getElementById('education_level').value;
     var below10thDiv = document.getElementById('below_10th_dropdown');
@@ -657,4 +553,33 @@ document.addEventListener('DOMContentLoaded', function() {
     <input type="tel" name="parent_contact" placeholder="Parent / Guardian Contact (Mobile / Phone)" value="<?= $profile['parent_contact'] ?? '' ?>"><br><br>
     
     <button type="submit" name="save_profile">Save Profile</button>
-</form>
+    </div>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div>
+            <h4>ScholarMatch</h4>
+            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
+        </div>
+        <div>
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="index.php#how-it-works">How It Works</a></li>
+                <li><a href="index.php#features">Features</a></li>
+                <li><a href="login.php">Login</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Contact</h4>
+            <p>Email: info@scholarmatch.com</p>
+            <p>Phone: (555) 123-4567</p>
+        </div>
+        <div>
+            <h4>Follow Us</h4>
+            <p>Facebook | Twitter | LinkedIn | Instagram</p>
+        </div>
+    </footer>
+
+</body>
+</html>

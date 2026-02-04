@@ -6,4 +6,3 @@ if(!$conn){
 }
 ?>
 
-//connection to the Database
