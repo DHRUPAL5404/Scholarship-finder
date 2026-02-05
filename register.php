@@ -4,60 +4,97 @@ ini_set('display_errors', 1);
 ?>
 <?php
 include "db.php"; // database connection
+session_start();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - ScholarMatch</title>
+    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+</head>
+<body>
 
-if(isset($_POST['register'])){
+    <!-- Navbar -->
+    <nav>
+        <ul>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="index.php#how-it-works">How It Works</a></li>
+            <li><a href="index.php#features">Features</a></li>
+            <?php if(isset($_SESSION['user_id'])): ?>
+                <li><a href="student_dashboard.php">Dashboard</a></li>
+                <li><a href="logout.php">Logout</a></li>
+            <?php else: ?>
+                <li><a href="login.php">Login</a></li>
+                <li><a href="register.php">Register</a></li>
+            <?php endif; ?>
+        </ul>
+    </nav>
 
-    // Fetch form data
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $mobile = mysqli_real_escape_string($conn, $_POST['mobile']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // secure
+    <?php
+    if(isset($_POST['register'])){
 
-    // Check if email or mobile already exists (use prepared statements)
-    $check_sql = "SELECT email, mobile FROM users WHERE email = ? OR mobile = ? LIMIT 1";
-    if ($stmt = mysqli_prepare($conn, $check_sql)) {
-        mysqli_stmt_bind_param($stmt, "ss", $email, $mobile);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_store_result($stmt);
-        mysqli_stmt_bind_result($stmt, $existing_email, $existing_mobile);
-        if (mysqli_stmt_fetch($stmt)) {
-            $errors = [];
-            if ($existing_email === $email) $errors[] = "Email already registered";
-            if ($existing_mobile === $mobile) $errors[] = "Mobile number already registered";
-            mysqli_stmt_close($stmt);
-            foreach ($errors as $e) {
-                echo htmlspecialchars($e) . "!<br>";
-            }
+        // Fetch form data
+        $name = mysqli_real_escape_string($conn, $_POST['name']);
+        $email = mysqli_real_escape_string($conn, $_POST['email']);
+        $mobile = mysqli_real_escape_string($conn, $_POST['mobile']);
+        $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // secure
+
+        // Check if email already exists
+        $check = "SELECT * FROM users WHERE email='$email'";
+        $result = mysqli_query($conn, $check);
+
+        if(mysqli_num_rows($result) > 0){
+            echo "Email already registered!";
         } else {
-            mysqli_stmt_close($stmt);
+            // Insert user
+            $query = "INSERT INTO users (name,email,mobile,password) 
+                      VALUES ('$name','$email','$mobile','$password')";
 
-            // Insert user using prepared statement
-            $ins_sql = "INSERT INTO users (name,email,mobile,password) VALUES (?,?,?,?)";
-            if ($ins = mysqli_prepare($conn, $ins_sql)) {
-                mysqli_stmt_bind_param($ins, "ssss", $name, $email, $mobile, $password);
-                if (mysqli_stmt_execute($ins)) {
-                    mysqli_stmt_close($ins);
-                    header("Location: login.php");
-                    exit();
-                } else {
-                    $err = mysqli_stmt_error($ins);
-                    echo "Error: " . htmlspecialchars($err);
-                    mysqli_stmt_close($ins);
-                }
+            if(mysqli_query($conn, $query)){
+                echo "Registration successful!";
+                header("Location: login.php"); exit();
             } else {
-                echo "Error preparing statement: " . htmlspecialchars(mysqli_error($conn));
+                echo "Error: ".mysqli_error($conn);
             }
         }
-    } else {
-        echo "Error preparing check: " . htmlspecialchars(mysqli_error($conn));
     }
-}
-?>
+    ?>
 
-<form method="post" action="register.php">
-  <input type="text" name="name" placeholder="Full Name" required><br><br>
-  <input type="email" name="email" placeholder="Email" required><br><br>
-  <input type="text" name="mobile" placeholder="Mobile Number" required><br><br>
-  <input type="password" name="password" placeholder="Password" required><br><br>
-  <button type="submit" name="register">Register</button>
-</form>
+    <form method="post" action="register.php">
+      <input type="text" name="name" placeholder="Full Name" required><br><br>
+      <input type="email" name="email" placeholder="Email" required><br><br>
+      <input type="text" name="mobile" placeholder="Mobile Number" required><br><br>
+      <input type="password" name="password" placeholder="Password" required><br><br>
+      <button type="submit" name="register">Register</button>
+    </form>
+
+    <!-- Footer -->
+    <footer id="footer">
+        <div>
+            <h4>ScholarMatch</h4>
+            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
+        </div>
+        <div>
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="index.php#how-it-works">How It Works</a></li>
+                <li><a href="index.php#features">Features</a></li>
+                <li><a href="login.php">Login</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Contact</h4>
+            <p>Email: info@scholarmatch.com</p>
+            <p>Phone: (555) 123-4567</p>
+        </div>
+        <div>
+            <h4>Follow Us</h4>
+            <p>Facebook | Twitter | LinkedIn | Instagram</p>
+        </div>
+    </footer>
+
+</body>
+</html>
