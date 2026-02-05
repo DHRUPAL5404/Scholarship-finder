@@ -1,18 +1,24 @@
+<<<<<<< HEAD
 <?php
-session_start();
 include "db.php";
+$id=$_GET['id'];
 
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
-    header("Location: login.php");
-    exit();
-}
+mysqli_query($conn,"
+UPDATE scholarships 
+SET status = IF(status='active','inactive','active')
+WHERE scholarship_id=$id
+");
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+=======
+<?php
+include "db.php";
+$id=$_GET['id'];
 
-if($id > 0) {
-    mysqli_query($conn, "UPDATE scholarships SET status = IF(status='active','inactive','active') WHERE scholarship_id=$id");
-}
+mysqli_query($conn,"
+UPDATE scholarships 
+SET status = IF(status='active','inactive','active')
+WHERE scholarship_id=$id
+");
 
+>>>>>>> dhruti
 header("Location: manage_scholarships.php");
-exit();
-?>
