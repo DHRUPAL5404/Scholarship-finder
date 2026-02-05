@@ -19,6 +19,17 @@ $profile = mysqli_fetch_assoc(
     mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$user_id")
 );
 
+// Set default profile if not exists
+if(!$profile) {
+    $profile = array(
+        'category' => 'General',
+        'marks' => 0,
+        'family_income' => 0,
+        'education_level' => '',
+        'state_id' => null
+    );
+}
+
 // Get filter values
 $category_filter = isset($_GET['category']) ? $_GET['category'] : '';
 $education_filter = isset($_GET['education']) ? $_GET['education'] : '';
@@ -101,7 +112,7 @@ function checkEligibility($scholarship, $student_profile) {
     );
     
     // Check category eligibility
-    if($scholarship['category'] != 'General' && $scholarship['category'] != $student_profile['category']) {
+    if(isset($scholarship['category']) && $scholarship['category'] != 'General' && $scholarship['category'] != $student_profile['category']) {
         if($scholarship['category'] == 'OBC' || $scholarship['category'] == 'SC' || $scholarship['category'] == 'ST') {
             // These can include General category
             if(strpos($student_profile['category'], 'General') === false) {
@@ -112,25 +123,25 @@ function checkEligibility($scholarship, $student_profile) {
     }
     
     // Check marks eligibility
-    if($scholarship['min_marks'] > 0 && $student_profile['marks'] < $scholarship['min_marks']) {
+    if(isset($scholarship['min_marks']) && $scholarship['min_marks'] > 0 && $student_profile['marks'] < $scholarship['min_marks']) {
         $eligibility['issues'][] = "Marks below minimum ({$scholarship['min_marks']}%)";
         $eligibility['percentage'] -= 30;
     }
     
     // Check family income eligibility
-    if($scholarship['max_family_income'] > 0 && $student_profile['family_income'] > $scholarship['max_family_income']) {
+    if(isset($scholarship['max_family_income']) && $scholarship['max_family_income'] > 0 && $student_profile['family_income'] > $scholarship['max_family_income']) {
         $eligibility['issues'][] = "Family income exceeds limit";
         $eligibility['percentage'] -= 25;
     }
     
     // Check education level eligibility
-    if($scholarship['education_level'] && strpos($student_profile['education_level'], $scholarship['education_level']) === false) {
+    if(isset($scholarship['education_level']) && $scholarship['education_level'] && strpos($student_profile['education_level'], $scholarship['education_level']) === false) {
         $eligibility['issues'][] = "Education level mismatch";
         $eligibility['percentage'] -= 20;
     }
     
     // Check state eligibility
-    if($scholarship['state_id'] && $scholarship['state_id'] != $student_profile['state_id']) {
+    if(isset($scholarship['state_id']) && $scholarship['state_id'] && $scholarship['state_id'] != $student_profile['state_id']) {
         $eligibility['issues'][] = "Not available in your state";
         $eligibility['percentage'] -= 50;
     }
@@ -305,20 +316,20 @@ try {
             <?php while($scholarship = mysqli_fetch_assoc($scholarships_result)): ?>
             <?php 
                 $eligibility = checkEligibility($scholarship, $profile);
-                $days_left = round((strtotime($scholarship['deadline']) - time()) / (60 * 60 * 24));
+                $days_left = isset($scholarship['deadline']) ? round((strtotime($scholarship['deadline']) - time()) / (60 * 60 * 24)) : 0;
                 $is_urgent = $days_left <= 7 && $days_left >= 0;
             ?>
             <div class="scholarship-card <?php echo $eligibility['status']; ?>">
                 <div class="card-header">
-                    <h3><?php echo htmlspecialchars($scholarship['title']); ?></h3>
+                    <h3><?php echo htmlspecialchars(isset($scholarship['title']) ? $scholarship['title'] : 'Untitled Scholarship'); ?></h3>
                 </div>
                 
                 <div class="card-body">
-                    <p><strong>Amount:</strong> ₹<?php echo number_format($scholarship['amount']); ?></p>
-                    <p><?php echo htmlspecialchars(substr($scholarship['description'], 0, 100)); ?>...</p>
+                    <p><strong>Amount:</strong> ₹<?php echo isset($scholarship['amount']) ? number_format($scholarship['amount']) : '0'; ?></p>
+                    <p><?php echo htmlspecialchars(isset($scholarship['description']) ? substr($scholarship['description'], 0, 100) : 'No description available'); ?>...</p>
                     
                     <div class="deadline-badge <?php echo $is_urgent ? 'urgent' : ''; ?>">
-                        📅 Deadline: <?php echo date('d M, Y', strtotime($scholarship['deadline'])); ?>
+                        📅 Deadline: <?php echo isset($scholarship['deadline']) ? date('d M, Y', strtotime($scholarship['deadline'])) : 'No deadline'; ?>
                         <?php if($is_urgent && $days_left >= 0): ?>
                         <br>⏰ <strong><?php echo $days_left; ?> days left</strong>
                         <?php endif; ?>

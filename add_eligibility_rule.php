@@ -3,64 +3,43 @@ session_start();
 include "db.php";
 if($_SESSION['role']!='admin'){ header("Location: login.php"); exit(); }
 
-$sch = mysqli_query($conn,"SELECT * FROM scholarships");
-
-if(isset($_POST['add'])){
-    mysqli_query($conn,"INSERT INTO eligibility_rules
-    (scholarship_id,field_name,operator,value)
-    VALUES
-    ('$_POST[scholarship]','$_POST[field]','$_POST[operator]','$_POST[value]')");
-    echo "Rule Added ✅";
-}
-?>
-
-<h2>Add Eligibility Rule</h2>
-
-<form method="post">
-<select name="scholarship">
-<?php while($s=mysqli_fetch_assoc($sch)){ ?>
-<option value="<?= $s['scholarship_id'] ?>"><?= $s['title'] ?></option>
-<?php } ?>
-</select><br><br>
-
-<select name="field">
-<option value="marks">Marks</option>
-<option value="family_income">Income</option>
-<option value="category">Category</option>
-<option value="gender">Gender</option>
-<option value="state">State</option>
-
-</select>
-
-<select name="operator">
-<option>=</option>
-<option>>=</option>
-<option><=</option>
-</select>
-
-<input type="text" name="value" required>
-<button name="add">Add Rule</button>
-</form>
-<?php
-session_start();
-include "db.php";
-if($_SESSION['role']!='admin'){ header("Location: login.php"); exit(); }
+// Create eligibility_rules table if not exists
+$create_table = "CREATE TABLE IF NOT EXISTS eligibility_rules (
+    rule_id INT PRIMARY KEY AUTO_INCREMENT,
+    scholarship_id INT NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    operator VARCHAR(10) NOT NULL,
+    value VARCHAR(255) NOT NULL,
+    FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id) ON DELETE CASCADE
+)";
+mysqli_query($conn, $create_table);
 
 $sch = mysqli_query($conn,"SELECT * FROM scholarships");
 
 if(isset($_POST['add'])){
     $scholarship_id = mysqli_real_escape_string($conn, $_POST['scholarship']);
-    $field_name = mysqli_real_escape_string($conn, $_POST['field']);
+    $field = mysqli_real_escape_string($conn, $_POST['field']);
     $operator = mysqli_real_escape_string($conn, $_POST['operator']);
     $value = mysqli_real_escape_string($conn, $_POST['value']);
     
-    mysqli_query($conn,"INSERT INTO eligibility_rules
-    (scholarship_id,field_name,operator,value)
-    VALUES
-    ('$scholarship_id','$field_name','$operator','$value')");
-    echo "✅ Rule Added Successfully!";
+    // Check if scholarship exists
+    $check_scholarship = mysqli_query($conn, "SELECT scholarship_id FROM scholarships WHERE scholarship_id = '$scholarship_id'");
+    if(mysqli_num_rows($check_scholarship) > 0){
+        $query = "INSERT INTO eligibility_rules (scholarship_id, field_name, operator, value) 
+                  VALUES ('$scholarship_id', '$field', '$operator', '$value')";
+        if(mysqli_query($conn, $query)){
+            echo "Rule Added ✅";
+        } else {
+            echo "Error adding rule: " . mysqli_error($conn);
+        }
+    } else {
+        echo "Invalid scholarship selected.";
+    }
 }
 ?>
+
+<h2>Add Eligibility Rule</h2>
+
 <!DOCTYPE html>
 <html>
 <head>
