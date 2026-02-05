@@ -104,6 +104,7 @@ if($count['count'] == 0) {
 <html>
 <head>
     <title>Database Setup - ScholarMatch</title>
+    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
     <style>
         body {
             font-family: Arial, sans-serif;
