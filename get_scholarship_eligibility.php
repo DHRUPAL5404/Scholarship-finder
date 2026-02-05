@@ -53,6 +53,8 @@ function checkEligibility($scholarship, $student_profile) {
         if($scholarship['category'] == 'OBC' || $scholarship['category'] == 'SC' || $scholarship['category'] == 'ST') {
             if(strpos($student_profile['category'], 'General') === false) {
                 $eligibility['issues'][] = "Category mismatch: Required {$scholarship['category']}, You have {$student_profile['category']}";
+
+                // Deduct points for category mismatch
                 $eligibility['percentage'] -= 20;
             } else {
                 $eligibility['details'][] = "✓ Category eligible";
@@ -66,6 +68,8 @@ function checkEligibility($scholarship, $student_profile) {
     if($scholarship['min_marks'] > 0) {
         if($student_profile['marks'] < $scholarship['min_marks']) {
             $eligibility['issues'][] = "Marks below minimum: Required {$scholarship['min_marks']}%, You have {$student_profile['marks']}%";
+            
+            // Deduct points for marks below minimum
             $eligibility['percentage'] -= 30;
         } else {
             $eligibility['details'][] = "✓ Marks eligible ({$student_profile['marks']}%)";
@@ -76,6 +80,8 @@ function checkEligibility($scholarship, $student_profile) {
     if($scholarship['max_family_income'] > 0) {
         if($student_profile['family_income'] > $scholarship['max_family_income']) {
             $eligibility['issues'][] = "Family income exceeds limit: Max ₹{$scholarship['max_family_income']}, You have ₹{$student_profile['family_income']}";
+            
+            // Deduct points for high family income
             $eligibility['percentage'] -= 25;
         } else {
             $eligibility['details'][] = "✓ Income eligible";
@@ -85,6 +91,8 @@ function checkEligibility($scholarship, $student_profile) {
     // Check education level eligibility
     if($scholarship['education_level'] && strpos($student_profile['education_level'], $scholarship['education_level']) === false) {
         $eligibility['issues'][] = "Education level mismatch: Required {$scholarship['education_level']}, You have {$student_profile['education_level']}";
+        
+        // Deduct points for education level mismatch
         $eligibility['percentage'] -= 20;
     } else {
         $eligibility['details'][] = "✓ Education level eligible";
@@ -93,6 +101,8 @@ function checkEligibility($scholarship, $student_profile) {
     // Check state eligibility
     if($scholarship['state_id'] && $scholarship['state_id'] != $student_profile['state_id']) {
         $eligibility['issues'][] = "Not available in your state";
+        
+        // Major deduction for state ineligibility
         $eligibility['percentage'] -= 50;
     } else {
         $eligibility['details'][] = "✓ State eligible";
