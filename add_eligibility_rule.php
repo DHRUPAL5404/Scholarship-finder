@@ -11,7 +11,10 @@ $sch = mysqli_query($conn,"SELECT * FROM scholarships");
 if(isset($_POST['add'])){
     $scholarship_id = mysqli_real_escape_string($conn, $_POST['scholarship']);
     $field_name = mysqli_real_escape_string($conn, $_POST['field']);
-    $operator = mysqli_real_escape_string($conn, $_POST['operator']);
+    $operator = mysqli_real_escape_string($conn, $_POST['operator'] ?? '=');
+    if(!in_array($operator, array('=', '>=', '<=', '>', '<'), true)){
+        $operator = '=';
+    }
     $value = mysqli_real_escape_string($conn, $_POST['value']);
     
     mysqli_query($conn,"INSERT INTO eligibility_rules
@@ -27,7 +30,7 @@ if(isset($_POST['add'])){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Eligibility Rule - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 <script>
 function showOtherInput(selectElement, fieldId) {
     const otherInput = document.getElementById(fieldId);
@@ -58,8 +61,9 @@ function showOtherInput(selectElement, fieldId) {
         </ul>
     </nav>
 
-    <div class="container">
+    <div class="container rules-page">
         <h2>Add Eligibility Rule</h2>
+        <div class="rules-builder">
 
         <label><strong>Select Scholarship:</strong></label>
         <form method="post" style="display:inline;">
@@ -205,6 +209,7 @@ function showOtherInput(selectElement, fieldId) {
         <input type="number" name="value" placeholder="e.g., 5" min="0" required>
         <button name="add" type="submit">Add</button>
         </form>
+        </div>
     </div>
 
     <!-- Footer -->

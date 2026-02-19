@@ -11,7 +11,7 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Manage Scholarships - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
@@ -38,9 +38,9 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
         $result = mysqli_query($conn,"SELECT * FROM scholarships");
         ?>
         <?php while($s=mysqli_fetch_assoc($result)){ ?>
-        <div style="border:1px solid #ccc;padding:10px;margin:10px">
+        <div class="manage-scholarship-card">
             <b><?= $s['title'] ?></b><br>
-            Status: <?= $s['status'] ?><br>
+            Status: <span class="status-chip <?= $s['status'] === 'active' ? 'success' : 'muted' ?>"><?= $s['status'] ?></span><br>
             <a href="toggle_scholarship.php?id=<?= $s['scholarship_id'] ?>">Toggle Status</a>
         </div>
         <?php } ?>
