@@ -7,7 +7,7 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScholarMatch - Find Your Perfect Scholarship</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
@@ -68,41 +68,24 @@ session_start();
     </section>
 
     <!-- Who It's For -->
-    <section id="who-it-for">
-        <h2>Who It's For</h2>
-        <div>
-            <h3>High School Students</h3>
-            <p>Find scholarships for your college journey</p>
-        </div>
-        <div>
-            <h3>Undergraduate Students</h3>
-            <p>Access funding for your continued education</p>
-        </div>
-        <div>
-            <h3>Graduate Students</h3>
-            <p>Discover advanced study opportunities</p>
-        </div>
-    </section>
+    
 
     <!-- Features -->
     <section id="features">
         <h2>Our Features</h2>
         <div>
-            <h3>Smart Matching</h3>
-            <p>AI-powered scholarship recommendations based on your profile</p>
+            <h3>Profile-Based Scholarship Matching</h3>
+            <p>Get personalized scholarship recommendations based on your unique profile</p>
         </div>
         <div>
-            <h3>Easy Application</h3>
-            <p>Apply to multiple scholarships in minutes</p>
+            <h3>Eligibility Checker</h3>
+            <p>Instantly check if you qualify for scholarships with our rule-based logic</p>
         </div>
         <div>
-            <h3>Track Progress</h3>
-            <p>Monitor your application status in real-time</p>
+            <h3>Scholarship Recommendations</h3>
+            <p>Receive tailored scholarship suggestions matched to your goals and qualifications</p>
         </div>
-        <div>
-            <h3>Expert Support</h3>
-            <p>Get guidance from scholarship advisors</p>
-        </div>
+       
         <div>
             <h3>Verified Listings</h3>
             <p>All scholarships are verified and legitimate</p>

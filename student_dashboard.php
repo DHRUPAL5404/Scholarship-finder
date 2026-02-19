@@ -161,8 +161,25 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard - ScholarMatch</title>
    
+    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
+   
 </head>
 <body>
+
+<nav>
+        <ul>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="index.php#how-it-works">How It Works</a></li>
+            <li><a href="index.php#features">Features</a></li>
+            <?php if(isset($_SESSION['user_id'])): ?>
+                <li><a href="admin_dashboard.php">Dashboard</a></li>
+                <li><a href="logout.php">Logout</a></li>
+            <?php else: ?>
+                <li><a href="login.php">Login</a></li>
+                <li><a href="register.php">Register</a></li>
+            <?php endif; ?>
+        </ul>
+    </nav>
 
 <div class="container">
     <!-- Header -->
@@ -283,6 +300,32 @@ try {
     </div>
     <?php endif; ?>
 </div>
+
+<!-- Footer -->
+    <footer id="footer">
+        <div>
+            <h4>ScholarMatch</h4>
+            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
+        </div>
+        <div>
+            <h4>Quick Links</h4>
+            <ul>
+                <li><a href="index.php">Home</a></li>
+                <li><a href="admin_dashboard.php">Admin Dashboard</a></li>
+                <li><a href="add_scholarship.php">Add Scholarship</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Contact</h4>
+            <p>Email: info@scholarmatch.com</p>
+            <p>Phone: (555) 123-4567</p>
+        </div>
+        <div>
+            <h4>Follow Us</h4>
+            <p>Facebook | Twitter | LinkedIn | Instagram</p>
+        </div>
+    </footer>
+
 
 </body>
 </html>

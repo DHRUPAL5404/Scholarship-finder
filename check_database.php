@@ -50,6 +50,7 @@ $all_good = $checks['scholarships_table'] && $checks['has_category'] && $checks[
 <html>
 <head>
     <title>Database Status Check - ScholarMatch</title>
+    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

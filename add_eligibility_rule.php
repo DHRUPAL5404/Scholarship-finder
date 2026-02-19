@@ -50,7 +50,7 @@ if(isset($_POST['add'])){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Eligibility Rule - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
 <script>
 function showOtherInput(selectElement, fieldId) {
     const otherInput = document.getElementById(fieldId);

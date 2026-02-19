@@ -37,7 +37,7 @@ if(isset($_POST['check'])){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eligible Students - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
