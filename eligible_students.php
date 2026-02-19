@@ -18,8 +18,10 @@ if(isset($_POST['check'])){
         $conditions[]="sp.{$r['field_name']} {$r['operator']} '{$r['value']}'";
     }
 
-    $sql="SELECT u.name,sp.* FROM student_profile sp 
-          JOIN users u ON u.user_id=sp.user_id";
+    // use full_name from profile when available, otherwise fallback to users table
+    $sql="SELECT COALESCE(NULLIF(sp.full_name, ''), u.name) AS student_name, sp.* 
+          FROM student_profile sp 
+          LEFT JOIN users u ON u.user_id=sp.user_id";
 
     if($conditions){
         $sql.=" WHERE ".implode(" AND ",$conditions);
@@ -69,7 +71,7 @@ if(isset($_POST['check'])){
 
         <?php if(isset($result)){ 
         while($st=mysqli_fetch_assoc($result)){
-        echo "<p>{$st['name']} ({$st['marks']}%)</p>";
+        echo "<p>{$st['student_name']} ({$st['marks']}%)</p>";
         }} ?>
     </div>
 

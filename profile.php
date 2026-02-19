@@ -10,8 +10,86 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
 $user_id = $_SESSION['user_id'];
 
 // Fetch student profile
+// handle form submission for profile update/insert
+if(isset($_POST['save_profile'])){
+    // sanitize inputs
+    $full_name = mysqli_real_escape_string($conn, $_POST['full_name']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $education_level = mysqli_real_escape_string($conn, $_POST['education_level']);
+    $course = mysqli_real_escape_string($conn, $_POST['course']);
+    $current_year = mysqli_real_escape_string($conn, $_POST['current_year']);
+    $marks = intval($_POST['marks']);
+    $family_income = intval($_POST['family_income']);
+    $category = mysqli_real_escape_string($conn, $_POST['category']);
+    $gender = mysqli_real_escape_string($conn, $_POST['gender']);
+    $state_id = intval($_POST['state_id']);
+    $district_id = intval($_POST['district_id']);
+    $institution_type = mysqli_real_escape_string($conn, $_POST['institution_type']);
+    $age = intval($_POST['age']);
+    $disability_type = mysqli_real_escape_string($conn, $_POST['disability_type']);
+    $disability_percent = intval($_POST['disability_percent']);
+    $minority_status = mysqli_real_escape_string($conn, $_POST['minority_status']);
+    $parent_name = mysqli_real_escape_string($conn, $_POST['parent_name']);
+    $parent_occupation = mysqli_real_escape_string($conn, $_POST['parent_occupation']);
+    $parent_contact = mysqli_real_escape_string($conn, $_POST['parent_contact']);
+    
+    $success = true;
+    $exists = mysqli_query($conn, "SELECT profile_id FROM student_profile WHERE user_id=$user_id");
+    if(mysqli_num_rows($exists) > 0){
+        // update
+        if(!mysqli_query($conn, "UPDATE student_profile SET 
+            full_name='$full_name',
+            education_level='$education_level',
+            course='$course',
+            current_year='$current_year',
+            marks=$marks,
+            family_income=$family_income,
+            category='$category',
+            gender='$gender',
+            state_id=$state_id,
+            district_id=$district_id,
+            institution_type='$institution_type',
+            age=$age,
+            disability_type='$disability_type',
+            disability_percent=$disability_percent,
+            minority_status='$minority_status',
+            parent_name='$parent_name',
+            parent_occupation='$parent_occupation',
+            parent_contact='$parent_contact'
+            WHERE user_id=$user_id")){
+            $success = false;
+            $message = "❌ Update failed: " . mysqli_error($conn);
+        }
+        // also update email in users table
+        if($success && !mysqli_query($conn, "UPDATE users SET email='$email' WHERE user_id=$user_id")){
+            $success = false;
+            $message = "❌ Email update failed: " . mysqli_error($conn);
+        }
+    } else {
+        // insert new
+        if(!mysqli_query($conn, "INSERT INTO student_profile 
+            (user_id, full_name, education_level, course, current_year, marks, family_income, category, gender, state_id, district_id, institution_type, age, disability_type, disability_percent, minority_status, parent_name, parent_occupation, parent_contact)
+            VALUES 
+            ($user_id,'$full_name','$education_level','$course','$current_year',$marks,$family_income,'$category','$gender',$state_id,$district_id,'$institution_type',$age,'$disability_type',$disability_percent,'$minority_status','$parent_name','$parent_occupation','$parent_contact')")){
+            $success = false;
+            $message = "❌ Insert failed: " . mysqli_error($conn);
+        }
+        // store email in users table as well
+        if($success && !mysqli_query($conn, "UPDATE users SET email='$email' WHERE user_id=$user_id")){
+            $success = false;
+            $message = "❌ Email update failed: " . mysqli_error($conn);
+        }
+    }
+    if($success){
+        $message = "✅ Profile saved successfully!";
+    }
+}
+
+// when retrieving profile include email from users for convenience
 $profile = mysqli_fetch_assoc(
-    mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$user_id")
+    mysqli_query($conn, "SELECT sp.*, u.email FROM student_profile sp 
+        JOIN users u ON sp.user_id=u.user_id 
+        WHERE sp.user_id=$user_id")
 );
 ?>
 <!DOCTYPE html>
@@ -42,6 +120,10 @@ $profile = mysqli_fetch_assoc(
 
     <div class="container">
         <h2>Update Your Profile</h2>
+        <?php if(isset($message)): ?>
+            <?php $color = strpos($message,'❌') === 0 ? 'red' : 'green'; ?>
+            <p style="color: <?= $color ?>; font-weight:bold;"><?= $message ?></p>
+        <?php endif; ?>
         
         <script>
 function toggleBelow10thDropdown() {
@@ -246,6 +328,10 @@ function toggleOtherField(dropdownId, otherFieldId) {
 }
 
 // Cascade dropdowns for State, District
+// prepare preselect values from PHP
+var preselectState = "<?= $profile['state_id'] ?? '' ?>";
+var preselectDistrict = "<?= $profile['district_id'] ?? '' ?>";
+
 document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state');
     const districtSelect = document.getElementById('district');
@@ -255,6 +341,11 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res => res.text())
         .then(data => {
             stateSelect.innerHTML += data;
+            if(preselectState) {
+                stateSelect.value = preselectState;
+                // trigger change to populate districts
+                stateSelect.dispatchEvent(new Event('change'));
+            }
         });
     
     // Load districts when state changes
@@ -265,6 +356,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(data => {
                     districtSelect.innerHTML = '<option value="">Select District</option>' + data;
                     districtSelect.disabled = false;
+                    if(preselectDistrict) {
+                        districtSelect.value = preselectDistrict;
+                    }
                 });
         } else {
             districtSelect.innerHTML = '<option value="">Select District</option>';
@@ -553,6 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <input type="tel" name="parent_contact" placeholder="Parent / Guardian Contact (Mobile / Phone)" value="<?= $profile['parent_contact'] ?? '' ?>"><br><br>
     
     <button type="submit" name="save_profile">Save Profile</button>
+    </form>
     </div>
 
     <!-- Footer -->

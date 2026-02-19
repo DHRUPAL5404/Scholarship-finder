@@ -86,8 +86,12 @@ if(isset($_POST['login'])){
             $_SESSION['user_name'] = $row['name'];
             $_SESSION['role'] = $row['role'];
 
-            // Redirect based on role
+            // if student, try to override with profile full name
             if($row['role'] == 'student'){
+                $prof = mysqli_fetch_assoc(mysqli_query($conn, "SELECT full_name FROM student_profile WHERE user_id=".intval($row['user_id'])));
+                if($prof && !empty($prof['full_name'])){
+                    $_SESSION['user_name'] = $prof['full_name'];
+                }
                 header("Location: student_dashboard.php");
             } else if($row['role'] == 'admin'){
                 header("Location: admin_dashboard.php");

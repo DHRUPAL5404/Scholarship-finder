@@ -29,6 +29,7 @@ CREATE TABLE users (
 CREATE TABLE student_profile (
     profile_id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNIQUE NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
     education_level VARCHAR(50) NOT NULL,
     course VARCHAR(100) NOT NULL,
     current_year VARCHAR(20) NOT NULL,
@@ -61,6 +62,7 @@ CREATE TABLE scholarships (
 CREATE TABLE eligibility_rules (
     rule_id INT AUTO_INCREMENT PRIMARY KEY,
     scholarship_id INT NOT NULL,
+    scholarship_title VARCHAR(150) NOT NULL,
     field_name ENUM(
         'marks',
         'family_income',
@@ -91,10 +93,10 @@ INSERT INTO users (name, email, password, role) VALUES
 
 -- Student Profile
 INSERT INTO student_profile
-(user_id, education_level, course, current_year, marks, family_income, category,
+(user_id, full_name, education_level, course, current_year, marks, family_income, category,
  gender, state, institution_type, age, disability_percent, minority_status)
 VALUES
-(1,'UG','BSc IT','3rd Year',72,220000,'SC',
+(1,'Ravi Patel','UG','BSc IT','3rd Year',72,220000,'SC',
  'Male','Gujarat','Government',20,0,'No');
 
 -- Scholarships
@@ -105,16 +107,16 @@ INSERT INTO scholarships (title, description, deadline, status) VALUES
  'active');
 
 -- Eligibility Rules
-INSERT INTO eligibility_rules (scholarship_id, field_name, operator, value) VALUES
-(1,'marks','>=','60'),
-(1,'family_income','<=','250000'),
-(1,'category','=','SC'),
-(1,'minority_status','=','No');
+INSERT INTO eligibility_rules (scholarship_id, scholarship_title, field_name, operator, value) VALUES
+(1,'Post Matric SC Scholarship','marks','>=','60'),
+(1,'Post Matric SC Scholarship','family_income','<=','250000'),
+(1,'Post Matric SC Scholarship','category','=','SC'),
+(1,'Post Matric SC Scholarship','minority_status','=','No');
 
 /* ======================================
    8. VIEW STUDENT PROFILE
 ====================================== */
-SELECT u.name, sp.*
+SELECT COALESCE(NULLIF(sp.full_name, ''), u.name) AS student_name, sp.*
 FROM student_profile sp
 JOIN users u ON u.user_id = sp.user_id;
 
@@ -936,3 +938,27 @@ ADD COLUMN parent_occupation VARCHAR(100) AFTER parent_name,
 ADD COLUMN parent_contact VARCHAR(15) AFTER parent_occupation,
 ADD COLUMN postgrad_course_other VARCHAR(100) AFTER course,
 ADD COLUMN phd_course_other VARCHAR(100) AFTER postgrad_course_other;
+
+
+ALTER TABLE eligibility_rules
+MODIFY field_name ENUM(
+  'marks',
+  'family_income',
+  'category',
+  'gender',
+  'state_id',
+  'education_level',
+  'institution_type',
+  'minority_status',
+  'disability_percent',
+  'age',
+  'course'
+);
+
+-- add scholarship_title if it doesn't exist
+ALTER TABLE eligibility_rules
+ADD COLUMN IF NOT EXISTS scholarship_title VARCHAR(150) NOT NULL AFTER scholarship_id;
+
+-- ensure student_profile has full_name column
+ALTER TABLE student_profile
+ADD COLUMN IF NOT EXISTS full_name VARCHAR(100) NOT NULL AFTER user_id;

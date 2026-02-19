@@ -17,6 +17,10 @@ $user_name = $_SESSION['user_name'];
 // Fetch student profile (safer)
 $profile_query = mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=" . intval($user_id));
 $profile = $profile_query ? mysqli_fetch_assoc($profile_query) : null;
+if ($profile && !empty($profile['full_name'])) {
+    // override session name with profile value
+    $user_name = $profile['full_name'];
+}
 if (!$profile) {
     $profile = [
         'category' => null,
