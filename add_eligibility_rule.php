@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     header("Location: login.php");
@@ -22,7 +22,10 @@ if($selected_sch_id) {
 if(isset($_POST['add'])){
     $scholarship_id = mysqli_real_escape_string($conn, $_POST['scholarship']);
     $field_name = mysqli_real_escape_string($conn, $_POST['field']);
-    $operator = mysqli_real_escape_string($conn, $_POST['operator']);
+    $operator = mysqli_real_escape_string($conn, $_POST['operator'] ?? '=');
+    if(!in_array($operator, array('=', '>=', '<=', '>', '<'), true)){
+        $operator = '=';
+    }
     $value = mysqli_real_escape_string($conn, $_POST['value']);
     
     // Separate handling for education_level and courses
@@ -42,7 +45,8 @@ if(isset($_POST['add'])){
     // reload page so that existing rules list updates
     header("Location: add_eligibility_rule.php?scholarship=$scholarship_id");
     exit();
-} 
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -50,7 +54,7 @@ if(isset($_POST['add'])){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Eligibility Rule - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 <script>
 function showOtherInput(selectElement, fieldId) {
     const otherInput = document.getElementById(fieldId);
@@ -81,8 +85,9 @@ function showOtherInput(selectElement, fieldId) {
         </ul>
     </nav>
 
-    <div class="container">
+    <div class="container rules-page">
         <h2>Add Eligibility Rule</h2>
+        <div class="rules-builder">
 
         <label><strong>Select Scholarship:</strong></label>
         <form method="post" style="display:inline;">
@@ -118,7 +123,7 @@ function showOtherInput(selectElement, fieldId) {
         <form method="post" style="margin: 5px 0;">
         <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
         <input type="hidden" name="field" value="education_level">
-        <select name="value" required onchange="showOtherInput(this, 'edu_other')"><option value="">-- Select --</option><option value="Below 10th">Below 10th</option><option value="Below 10th - Primary School (Std 1–8)">Below 10th - Primary</option><option value="Below 10th - Secondary School – Appearing (Std 9–10)">Below 10th - Secondary</option><option value="10th Pass(SSC)">10th Pass</option><option value="Undergraduate">Undergraduate</option><option value="Postgraduate">Postgraduate</option><option value="PhD">PhD</option><option value="Other">Others</option></select>
+        <select name="value" required onchange="showOtherInput(this, 'edu_other')"><option value="">-- Select --</option><option value="Below 10th">Below 10th</option><option value="Below 10th - Primary School (Std 1â€“8)">Below 10th - Primary</option><option value="Below 10th - Secondary School â€“ Appearing (Std 9â€“10)">Below 10th - Secondary</option><option value="10th Pass(SSC)">10th Pass</option><option value="Undergraduate">Undergraduate</option><option value="Postgraduate">Postgraduate</option><option value="PhD">PhD</option><option value="Other">Others</option></select>
         <div id="edu_other" style="display:none;"><input type="text" name="value" placeholder="Specify" required></div>
         <button name="add" type="submit">Add</button>
         </form>
@@ -233,6 +238,7 @@ function showOtherInput(selectElement, fieldId) {
         <input type="number" name="value" placeholder="e.g., 5" min="0" required>
         <button name="add" type="submit">Add</button>
         </form>
+        </div>
     </div>
 
     <!-- Footer -->
