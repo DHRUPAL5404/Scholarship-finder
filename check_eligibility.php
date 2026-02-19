@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include "db.php";
 
@@ -14,7 +14,7 @@ $profile_q = mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$u
 $student = mysqli_fetch_assoc($profile_q);
 
 if(!$student){
-    $error = "⚠️ Please complete your profile first.";
+    $error = "âš ï¸ Please complete your profile first.";
 }
 ?>
 <!DOCTYPE html>
@@ -23,7 +23,7 @@ if(!$student){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check Eligibility - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
@@ -47,7 +47,7 @@ if(!$student){
         <?php if(isset($error)): ?>
             <p><?php echo $error; ?></p>
         <?php else: ?>
-            <h2>Eligible Scholarships 🎯</h2>
+            <h2>Eligible Scholarships ðŸŽ¯</h2>
             
             <?php
             /* Fetch active scholarships */
@@ -96,18 +96,18 @@ if(!$student){
                 if($eligible){
                     $found = true;
                     echo "
-                    <div style='border:1px solid #ccc; padding:15px; margin:15px 0;'>
+                    <div class='eligible-card'>
                         <h3>{$sch['title']}</h3>
                         <p>{$sch['description']}</p>
                         <p><b>Deadline:</b> {$sch['deadline']}</p>
-                        <a href='apply.php?sid={$sid}'>Apply Now</a>
+                        <a href='apply.php?sid={$sid}' class='btn'>Apply Now</a>
                     </div>
                     ";
                 }
             }
             
             if(!$found){
-                echo "<p>😕 No scholarships matched your profile.</p>";
+                echo "<p>ðŸ˜• No scholarships matched your profile.</p>";
             }
             ?>
         <?php endif; ?>
