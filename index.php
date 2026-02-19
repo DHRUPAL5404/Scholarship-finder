@@ -7,9 +7,9 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ScholarMatch - Find Your Perfect Scholarship</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
-<body>
+<body class="home-page">
 
     <!-- Navbar -->
     <nav>
@@ -49,67 +49,53 @@ session_start();
     <!-- How It Works -->
     <section id="how-it-works">
         <h2>How It Works</h2>
-        <div>
-            <h3>Step 1: Create Account</h3>
-            <p>Sign up and tell us about yourself</p>
-        </div>
-        <div>
-            <h3>Step 2: Complete Profile</h3>
-            <p>Add your academic details and interests</p>
-        </div>
-        <div>
-            <h3>Step 3: Discover Scholarships</h3>
-            <p>Browse scholarships matched to your profile</p>
-        </div>
-        <div>
-            <h3>Step 4: Apply</h3>
-            <p>Submit applications directly through our platform</p>
+        <div class="steps-grid">
+            <div>
+                <h3>Step 1: Create Account</h3>
+                <p>Sign up and tell us about yourself</p>
+            </div>
+            <div>
+                <h3>Step 2: Complete Profile</h3>
+                <p>Add your academic details and interests</p>
+            </div>
+            <div>
+                <h3>Step 3: Discover Scholarships</h3>
+                <p>Browse scholarships matched to your profile</p>
+            </div>
+            <div>
+                <h3>Step 4: Apply</h3>
+                <p>Submit applications directly through our platform</p>
+            </div>
         </div>
     </section>
 
     <!-- Who It's For -->
-    <section id="who-it-for">
-        <h2>Who It's For</h2>
-        <div>
-            <h3>High School Students</h3>
-            <p>Find scholarships for your college journey</p>
-        </div>
-        <div>
-            <h3>Undergraduate Students</h3>
-            <p>Access funding for your continued education</p>
-        </div>
-        <div>
-            <h3>Graduate Students</h3>
-            <p>Discover advanced study opportunities</p>
-        </div>
-    </section>
+    
 
     <!-- Features -->
     <section id="features">
         <h2>Our Features</h2>
-        <div>
-            <h3>Smart Matching</h3>
-            <p>AI-powered scholarship recommendations based on your profile</p>
-        </div>
-        <div>
-            <h3>Easy Application</h3>
-            <p>Apply to multiple scholarships in minutes</p>
-        </div>
-        <div>
-            <h3>Track Progress</h3>
-            <p>Monitor your application status in real-time</p>
-        </div>
-        <div>
-            <h3>Expert Support</h3>
-            <p>Get guidance from scholarship advisors</p>
-        </div>
-        <div>
-            <h3>Verified Listings</h3>
-            <p>All scholarships are verified and legitimate</p>
-        </div>
-        <div>
-            <h3>100% Free</h3>
-            <p>No hidden fees or charges</p>
+        <div class="features-grid">
+            <div>
+                <h3>Profile-Based Scholarship Matching</h3>
+                <p>Get personalized scholarship recommendations based on your unique profile</p>
+            </div>
+            <div>
+                <h3>Eligibility Checker</h3>
+                <p>Instantly check if you qualify for scholarships with our rule-based logic</p>
+            </div>
+            <div>
+                <h3>Scholarship Recommendations</h3>
+                <p>Receive tailored scholarship suggestions matched to your goals and qualifications</p>
+            </div>
+            <div>
+                <h3>Verified Listings</h3>
+                <p>All scholarships are verified and legitimate</p>
+            </div>
+            <div>
+                <h3>100% Free</h3>
+                <p>No hidden fees or charges</p>
+            </div>
         </div>
     </section>
 

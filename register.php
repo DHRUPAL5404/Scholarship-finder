@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 ?>
@@ -12,7 +12,7 @@ session_start();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
@@ -48,13 +48,25 @@ session_start();
         if(mysqli_num_rows($result) > 0){
             echo "Email already registered!";
         } else {
-            // Insert user
-            $query = "INSERT INTO users (name,email,mobile,password) 
-                      VALUES ('$name','$email','$mobile','$password')";
+            // Insert user with student role
+            $query = "INSERT INTO users (name,email,mobile,password,role) 
+                      VALUES ('$name','$email','$mobile','$password','student')";
 
             if(mysqli_query($conn, $query)){
-                echo "Registration successful!";
-                header("Location: login.php"); exit();
+                // Get the inserted user ID
+                $user_id = mysqli_insert_id($conn);
+                
+                // Create empty student profile
+                $profile_query = "INSERT INTO student_profile (user_id, full_name, email) 
+                                VALUES ($user_id, '$name', '$email')";
+                
+                if(mysqli_query($conn, $profile_query)){
+                    echo "Registration successful!";
+                    header("Location: login.php"); exit();
+                } else {
+                    echo "Registration successful but profile creation failed: ".mysqli_error($conn);
+                    header("Location: login.php"); exit();
+                }
             } else {
                 echo "Error: ".mysqli_error($conn);
             }
@@ -62,13 +74,16 @@ session_start();
     }
     ?>
 
-    <form method="post" action="register.php">
-      <input type="text" name="name" placeholder="Full Name" required><br><br>
-      <input type="email" name="email" placeholder="Email" required><br><br>
-      <input type="text" name="mobile" placeholder="Mobile Number" required><br><br>
-      <input type="password" name="password" placeholder="Password" required><br><br>
-      <button type="submit" name="register">Register</button>
-    </form>
+    <main>
+        <h2>Create Your Account</h2>
+        <form method="post" action="register.php">
+          <input type="text" name="name" placeholder="Full Name" required><br><br>
+          <input type="email" name="email" placeholder="Email" required><br><br>
+          <input type="text" name="mobile" placeholder="Mobile Number" required><br><br>
+          <input type="password" name="password" placeholder="Password" required><br><br>
+          <button type="submit" name="register">Register</button>
+        </form>
+    </main>
 
     <!-- Footer -->
     <footer id="footer">

@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include "db.php";
 
@@ -15,7 +15,7 @@ if(isset($_POST['add'])){
     mysqli_query($conn,"INSERT INTO scholarships(title,description,deadline,status)
     VALUES('$title','$desc','$deadline','active')");
     
-    echo "Scholarship Added ✅";
+    echo "Scholarship Added âœ…";
 }
 ?>
 <!DOCTYPE html>
@@ -24,7 +24,7 @@ if(isset($_POST['add'])){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Scholarship - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 

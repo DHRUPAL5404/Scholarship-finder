@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 session_start();
 include "db.php";
 
@@ -8,6 +8,157 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
 }
 
 $user_id = $_SESSION['user_id'];
+
+function ensureStudentProfileSchema($conn) {
+    $required_columns = array(
+        'full_name' => 'VARCHAR(255) NULL',
+        'email' => 'VARCHAR(255) NULL',
+        'education_level' => 'VARCHAR(255) NULL',
+        'marks' => 'DECIMAL(5,2) NULL',
+        'family_income' => 'INT NULL',
+        'category' => 'VARCHAR(100) NULL',
+        'gender' => 'VARCHAR(50) NULL',
+        'state_id' => 'INT NULL',
+        'district_id' => 'INT NULL',
+        'institution_type' => 'VARCHAR(100) NULL',
+        'age' => 'INT NULL',
+        'disability_type' => "VARCHAR(100) DEFAULT 'None'",
+        'disability_percent' => 'INT DEFAULT 0',
+        'minority_status' => 'VARCHAR(10) NULL',
+        'parent_name' => 'VARCHAR(255) NULL',
+        'parent_occupation' => 'VARCHAR(255) NULL',
+        'parent_contact' => 'VARCHAR(20) NULL',
+        'course' => 'VARCHAR(255) NULL',
+        'current_year' => 'VARCHAR(50) NULL'
+    );
+
+    $errors = array();
+
+    foreach($required_columns as $column_name => $definition) {
+        $check_query = "SHOW COLUMNS FROM `student_profile` LIKE '$column_name'";
+        $check_result = mysqli_query($conn, $check_query);
+
+        if($check_result && mysqli_num_rows($check_result) === 0) {
+            $alter_query = "ALTER TABLE `student_profile` ADD COLUMN `$column_name` $definition";
+            if(!mysqli_query($conn, $alter_query)) {
+                $errors[] = "Could not add column `$column_name`: " . mysqli_error($conn);
+            }
+        }
+    }
+
+    return $errors;
+}
+
+$schema_errors = ensureStudentProfileSchema($conn);
+
+// Handle form submission
+$success_message = '';
+$error_message = empty($schema_errors) ? '' : implode('<br>', $schema_errors);
+
+if(isset($_POST['save_profile'])){
+    // Collect form data
+    $full_name = mysqli_real_escape_string($conn, $_POST['full_name']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $education_level = mysqli_real_escape_string($conn, $_POST['education_level']);
+    $marks = intval($_POST['marks']);
+    $family_income = intval($_POST['family_income']);
+    $category = mysqli_real_escape_string($conn, $_POST['category']);
+    $gender = mysqli_real_escape_string($conn, $_POST['gender']);
+    $state_id = intval($_POST['state_id']);
+    $district_id = intval($_POST['district_id']);
+    $institution_type = mysqli_real_escape_string($conn, $_POST['institution_type']);
+    $age = intval($_POST['age']);
+    $disability_type = mysqli_real_escape_string($conn, $_POST['disability_type'] ?? 'None');
+    $disability_percent = intval($_POST['disability_percent'] ?? 0);
+    $minority_status = mysqli_real_escape_string($conn, $_POST['minority_status']);
+    $parent_name = mysqli_real_escape_string($conn, $_POST['parent_name'] ?? '');
+    $parent_occupation = mysqli_real_escape_string($conn, $_POST['parent_occupation'] ?? '');
+    $parent_contact = mysqli_real_escape_string($conn, $_POST['parent_contact'] ?? '');
+    
+    // Handle optional fields
+    $below_10th_level = isset($_POST['below_10th_level']) ? mysqli_real_escape_string($conn, $_POST['below_10th_level']) : '';
+    $tenth_stream = isset($_POST['tenth_stream']) ? mysqli_real_escape_string($conn, $_POST['tenth_stream']) : '';
+    $diploma_course = isset($_POST['diploma_course']) ? mysqli_real_escape_string($conn, $_POST['diploma_course']) : '';
+    $undergrad_stream = isset($_POST['undergrad_stream']) ? mysqli_real_escape_string($conn, $_POST['undergrad_stream']) : '';
+    $science_group = isset($_POST['science_group']) ? mysqli_real_escape_string($conn, $_POST['science_group']) : '';
+    $undergrad_course = isset($_POST['undergrad_course']) ? mysqli_real_escape_string($conn, $_POST['undergrad_course']) : '';
+    $postgrad_course = isset($_POST['postgrad_course']) ? mysqli_real_escape_string($conn, $_POST['postgrad_course']) : '';
+    $phd_course = isset($_POST['phd_course']) ? mysqli_real_escape_string($conn, $_POST['phd_course']) : '';
+    $course = isset($_POST['course']) ? mysqli_real_escape_string($conn, $_POST['course']) : '';
+    $current_year = isset($_POST['current_year']) ? mysqli_real_escape_string($conn, $_POST['current_year']) : '';
+    
+    // Build the education_level string with all details
+    $education_final = $education_level;
+    if($education_level === 'Below 10th' && $below_10th_level) {
+        $education_final = $below_10th_level;
+    } elseif($education_level === '10th Pass(SSC)' && $tenth_stream) {
+        $education_final = $tenth_stream;
+    } elseif($education_level === 'Undergraduate' && ($science_group || $undergrad_course)) {
+        $education_final = 'Undergraduate - ' . ($science_group ?: $undergrad_course);
+    } elseif($education_level === 'Postgraduate' && $postgrad_course) {
+        $education_final = $postgrad_course;
+    } elseif($education_level === 'PhD' && $phd_course) {
+        $education_final = $phd_course;
+    }
+    
+    // Check if profile exists
+    $check_query = "SELECT profile_id FROM student_profile WHERE user_id = $user_id";
+    $check_result = mysqli_query($conn, $check_query);
+    
+    if(mysqli_num_rows($check_result) > 0) {
+        // Update existing profile
+        $update_query = "UPDATE student_profile SET
+            full_name = '$full_name',
+            email = '$email',
+            education_level = '$education_final',
+            marks = $marks,
+            family_income = $family_income,
+            category = '$category',
+            gender = '$gender',
+            state_id = $state_id,
+            district_id = $district_id,
+            institution_type = '$institution_type',
+            age = $age,
+            disability_type = '$disability_type',
+            disability_percent = $disability_percent,
+            minority_status = '$minority_status',
+            parent_name = '$parent_name',
+            parent_occupation = '$parent_occupation',
+            parent_contact = '$parent_contact',
+            course = '$course',
+            current_year = '$current_year'
+            WHERE user_id = $user_id";
+        
+        if(mysqli_query($conn, $update_query)){
+            $_SESSION['profile_success'] = "Profile updated successfully!";
+            header("Location: student_dashboard.php");
+            exit();
+        } else {
+            $error_message = "Error updating profile: " . mysqli_error($conn);
+        }
+    } else {
+        // Insert new profile
+        $insert_query = "INSERT INTO student_profile (
+            user_id, full_name, email, education_level, marks, family_income, category, 
+            gender, state_id, district_id, institution_type, age, disability_type, 
+            disability_percent, minority_status, parent_name, parent_occupation, 
+            parent_contact, course, current_year
+        ) VALUES (
+            $user_id, '$full_name', '$email', '$education_final', $marks, $family_income, 
+            '$category', '$gender', $state_id, $district_id, '$institution_type', $age, 
+            '$disability_type', $disability_percent, '$minority_status', '$parent_name', 
+            '$parent_occupation', '$parent_contact', '$course', '$current_year'
+        )";
+        
+        if(mysqli_query($conn, $insert_query)){
+            $_SESSION['profile_success'] = "Profile saved successfully!";
+            header("Location: student_dashboard.php");
+            exit();
+        } else {
+            $error_message = "Error saving profile: " . mysqli_error($conn);
+        }
+    }
+}
 
 // Fetch student profile
 $profile = mysqli_fetch_assoc(
@@ -20,7 +171,7 @@ $profile = mysqli_fetch_assoc(
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Update Profile - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/navbar-footer.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
@@ -40,8 +191,20 @@ $profile = mysqli_fetch_assoc(
         </ul>
     </nav>
 
-    <div class="container">
+    <div class="container profile-page">
         <h2>Update Your Profile</h2>
+        
+        <?php if($success_message): ?>
+            <div style="color: green; background-color: #d4edda; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+                <?php echo $success_message; ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if($error_message): ?>
+            <div style="color: red; background-color: #f8d7da; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
+                <?php echo $error_message; ?>
+            </div>
+        <?php endif; ?>
         
         <script>
 function toggleBelow10thDropdown() {
@@ -52,6 +215,25 @@ function toggleBelow10thDropdown() {
     var postgradCourseDiv = document.getElementById('postgrad_course_dropdown');
     var phdCourseDiv = document.getElementById('phd_course_dropdown');
     var courseYearDiv = document.getElementById('course_year_fields');
+    var below10thSelect = document.querySelector('select[name="below_10th_level"]');
+    var tenthStreamSelect = document.getElementById('tenth_stream');
+    var undergradStreamSelect = document.getElementById('undergrad_stream');
+    var scienceGroupSelect = document.getElementById('science_group');
+    var undergradCourseSelect = document.getElementById('undergrad_course');
+    var postgradCourseSelect = document.getElementById('postgrad_course');
+    var phdCourseSelect = document.getElementById('phd_course');
+    var courseInput = document.getElementById('course');
+    var currentYearInput = document.getElementById('current_year');
+
+    below10thSelect.removeAttribute('required');
+    tenthStreamSelect.removeAttribute('required');
+    undergradStreamSelect.removeAttribute('required');
+    scienceGroupSelect.removeAttribute('required');
+    undergradCourseSelect.removeAttribute('required');
+    postgradCourseSelect.removeAttribute('required');
+    phdCourseSelect.removeAttribute('required');
+    courseInput.removeAttribute('required');
+    currentYearInput.removeAttribute('required');
     
     if(educationLevel === '') {
         below10thDiv.style.display = 'none';
@@ -60,8 +242,6 @@ function toggleBelow10thDropdown() {
         postgradCourseDiv.style.display = 'none';
         phdCourseDiv.style.display = 'none';
         courseYearDiv.style.display = 'none';
-        document.getElementById('course').removeAttribute('required');
-        document.getElementById('current_year').removeAttribute('required');
     } else if(educationLevel === 'Below 10th') {
         below10thDiv.style.display = 'block';
         tenthStreamDiv.style.display = 'none';
@@ -69,8 +249,7 @@ function toggleBelow10thDropdown() {
         postgradCourseDiv.style.display = 'none';
         phdCourseDiv.style.display = 'none';
         courseYearDiv.style.display = 'none';
-        document.getElementById('course').removeAttribute('required');
-        document.getElementById('current_year').removeAttribute('required');
+        below10thSelect.setAttribute('required', 'required');
     } else if(educationLevel === '10th Pass(SSC)') {
         below10thDiv.style.display = 'none';
         tenthStreamDiv.style.display = 'block';
@@ -78,8 +257,7 @@ function toggleBelow10thDropdown() {
         postgradCourseDiv.style.display = 'none';
         phdCourseDiv.style.display = 'none';
         courseYearDiv.style.display = 'none';
-        document.getElementById('course').removeAttribute('required');
-        document.getElementById('current_year').removeAttribute('required');
+        tenthStreamSelect.setAttribute('required', 'required');
     } else if(educationLevel === 'Undergraduate') {
         below10thDiv.style.display = 'none';
         tenthStreamDiv.style.display = 'none';
@@ -87,8 +265,7 @@ function toggleBelow10thDropdown() {
         postgradCourseDiv.style.display = 'none';
         phdCourseDiv.style.display = 'none';
         courseYearDiv.style.display = 'none';
-        document.getElementById('course').removeAttribute('required');
-        document.getElementById('current_year').removeAttribute('required');
+        undergradStreamSelect.setAttribute('required', 'required');
     } else if(educationLevel === 'Postgraduate') {
         below10thDiv.style.display = 'none';
         tenthStreamDiv.style.display = 'none';
@@ -96,9 +273,7 @@ function toggleBelow10thDropdown() {
         postgradCourseDiv.style.display = 'block';
         phdCourseDiv.style.display = 'none';
         courseYearDiv.style.display = 'none';
-        document.getElementById('postgrad_course').setAttribute('required', 'required');
-        document.getElementById('course').removeAttribute('required');
-        document.getElementById('current_year').removeAttribute('required');
+        postgradCourseSelect.setAttribute('required', 'required');
     } else if(educationLevel === 'PhD') {
         below10thDiv.style.display = 'none';
         tenthStreamDiv.style.display = 'none';
@@ -106,9 +281,7 @@ function toggleBelow10thDropdown() {
         postgradCourseDiv.style.display = 'none';
         phdCourseDiv.style.display = 'block';
         courseYearDiv.style.display = 'none';
-        document.getElementById('phd_course').setAttribute('required', 'required');
-        document.getElementById('course').removeAttribute('required');
-        document.getElementById('current_year').removeAttribute('required');
+        phdCourseSelect.setAttribute('required', 'required');
     } else {
         below10thDiv.style.display = 'none';
         tenthStreamDiv.style.display = 'none';
@@ -116,9 +289,13 @@ function toggleBelow10thDropdown() {
         postgradCourseDiv.style.display = 'none';
         phdCourseDiv.style.display = 'none';
         courseYearDiv.style.display = 'block';
-        document.getElementById('course').setAttribute('required', 'required');
-        document.getElementById('current_year').setAttribute('required', 'required');
+        courseInput.setAttribute('required', 'required');
+        currentYearInput.setAttribute('required', 'required');
     }
+
+    toggleDiplomaDropdown();
+    toggleScienceGroupDropdown();
+    toggleTwelfthCourseDropdown();
 }
 
 function toggleDiplomaDropdown() {
@@ -142,6 +319,8 @@ function toggleScienceGroupDropdown() {
     if(undergradStream === 'Science') {
         scienceGroupDiv.style.display = 'block';
         document.getElementById('science_group').setAttribute('required', 'required');
+        undergradCourseDiv.style.display = 'none';
+        document.getElementById('undergrad_course').removeAttribute('required');
     } else if(undergradStream === 'Commerce' || undergradStream === 'Arts') {
         scienceGroupDiv.style.display = 'none';
         document.getElementById('science_group').removeAttribute('required');
@@ -217,7 +396,7 @@ function updateCoursesForStream(stream) {
     courses['Arts'] = [
         'B.A (Arts / Humanities)',
         'Fashion Designing / Fine Arts',
-        'LLB (Law – 5 Year)',
+        'LLB (Law â€“ 5 Year)',
         'Hotel Management / Tourism',
         'B.Ed (Integrated)'
     ];
@@ -264,17 +443,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(res => res.text())
                 .then(data => {
                     districtSelect.innerHTML = '<option value="">Select District</option>' + data;
-                    districtSelect.disabled = false;
                 });
         } else {
             districtSelect.innerHTML = '<option value="">Select District</option>';
-            districtSelect.disabled = true;
+            districtSelect.value = '';
         }
     });
+
+    toggleBelow10thDropdown();
 });
 </script>
 
-<form method="post" action="profile.php">
+<form method="post" action="profile.php" class="profile-form">
     Full Name:
     <input type="text" name="full_name" placeholder="Full Name" value="<?= $profile['full_name'] ?? '' ?>" required><br><br>
     
@@ -291,22 +471,21 @@ document.addEventListener('DOMContentLoaded', function() {
         <option value="PhD" <?= ($profile && $profile['education_level']=='PhD')?'selected':'' ?>>PhD</option>
         <option value="Other" <?= ($profile && $profile['education_level']=='Other')?'selected':'' ?>>Other</option>
     </select><br><br>
-    </select><br><br>
     
     <!-- Conditional dropdown for Below 10th -->
     <div id="below_10th_dropdown" style="display:<?= ($profile && strpos($profile['education_level'], 'Below 10th') !== false) ? 'block' : 'none' ?>;">
         <label>Select Standard:</label>
-        <select name="below_10th_level" required>
+        <select name="below_10th_level">
             <option value="">Select Standard</option>
-            <option value="Primary School (Std 1–8)" <?= ($profile && strpos($profile['education_level'], 'Primary School') !== false)?'selected':'' ?>>Primary School (Std 1–8)</option>
-            <option value="Secondary School – Appearing (Std 9–10)" <?= ($profile && strpos($profile['education_level'], 'Secondary School') !== false)?'selected':'' ?>>Secondary School – Appearing (Std 9–10)</option>
+            <option value="Primary School (Std 1â€“8)" <?= ($profile && strpos($profile['education_level'], 'Primary School') !== false)?'selected':'' ?>>Primary School (Std 1â€“8)</option>
+            <option value="Secondary School â€“ Appearing (Std 9â€“10)" <?= ($profile && strpos($profile['education_level'], 'Secondary School') !== false)?'selected':'' ?>>Secondary School â€“ Appearing (Std 9â€“10)</option>
         </select><br><br>
     </div>
     
     <!-- Conditional dropdown for 10th Pass Stream -->
     <div id="tenth_stream_dropdown" style="display:<?= ($profile && strpos($profile['education_level'], '10th Pass') !== false) ? 'block' : 'none' ?>;">
         <label>Select Stream:</label>
-        <select id="tenth_stream" name="tenth_stream" onchange="toggleDiplomaDropdown()" required>
+        <select id="tenth_stream" name="tenth_stream" onchange="toggleDiplomaDropdown()">
             <option value="">Select Stream</option>
             <option value="Science" <?= ($profile && strpos($profile['education_level'], 'Science') !== false)?'selected':'' ?>>Science</option>
             <option value="Commerce" <?= ($profile && strpos($profile['education_level'], 'Commerce') !== false)?'selected':'' ?>>Commerce</option>
@@ -338,7 +517,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Conditional dropdown for Undergraduate Stream -->
     <div id="undergrad_stream_dropdown" style="display:<?= ($profile && strpos($profile['education_level'], 'Undergraduate') !== false) ? 'block' : 'none' ?>;">
         <label>Select Stream:</label>
-        <select id="undergrad_stream" name="undergrad_stream" onchange="toggleScienceGroupDropdown()" required>
+        <select id="undergrad_stream" name="undergrad_stream" onchange="toggleScienceGroupDropdown()">
             <option value="">Select Stream</option>
             <option value="Science" <?= ($profile && strpos($profile['education_level'], 'Undergraduate - Science') !== false)?'selected':'' ?>>Science</option>
             <option value="Commerce" <?= ($profile && strpos($profile['education_level'], 'Undergraduate - Commerce') !== false)?'selected':'' ?>>Commerce</option>
@@ -348,7 +527,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- Conditional dropdown for Science Group -->
         <div id="science_group_dropdown" style="display:<?= ($profile && strpos($profile['education_level'], 'Undergraduate - Science') !== false) ? 'block' : 'none' ?>;">
             <label>Select Science Group:</label>
-            <select id="science_group" name="science_group" onchange="toggleTwelfthCourseDropdown()" required>
+            <select id="science_group" name="science_group" onchange="toggleTwelfthCourseDropdown()">
                 <option value="">Select Group</option>
                 <option value="Group A" <?= ($profile && strpos($profile['education_level'], 'Group A') !== false)?'selected':'' ?>>Group A (Physics, Chemistry, Mathematics)</option>
                 <option value="Group B" <?= ($profile && strpos($profile['education_level'], 'Group B') !== false)?'selected':'' ?>>Group B (Physics, Chemistry, Biology)</option>
@@ -358,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- Conditional dropdown for Undergraduate Courses -->
         <div id="undergrad_course_dropdown" style="display:<?= ($profile && strpos($profile['education_level'], 'Undergraduate') !== false && (strpos($profile['education_level'], 'Science') !== false || strpos($profile['education_level'], 'Commerce') !== false || strpos($profile['education_level'], 'Arts') !== false)) ? 'block' : 'none' ?>;">
             <label>Select Course:</label>
-            <select id="undergrad_course" name="undergrad_course" onchange="toggleOtherField('undergrad_course', 'undergrad_course_other_field')" required>
+            <select id="undergrad_course" name="undergrad_course" onchange="toggleOtherField('undergrad_course', 'undergrad_course_other_field')">
                 <option value="">Select Course</option>
             </select><br><br>
             
@@ -372,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Conditional dropdown for Postgraduate Course -->
     <div id="postgrad_course_dropdown" style="display:<?= ($profile && strpos($profile['education_level'], 'Postgraduate') !== false) ? 'block' : 'none' ?>;">
         <label>Select Postgraduate Course:</label>
-        <select id="postgrad_course" name="postgrad_course" onchange="toggleOtherField('postgrad_course', 'postgrad_course_other_field')" required>
+        <select id="postgrad_course" name="postgrad_course" onchange="toggleOtherField('postgrad_course', 'postgrad_course_other_field')">
             <option value="">Select Course</option>
             <option value="M.E. / M.Tech (Engineering)" <?= ($profile && strpos($profile['education_level'], 'M.E. / M.Tech (Engineering)') !== false)?'selected':'' ?>>M.E. / M.Tech (Engineering)</option>
             <option value="M.Sc (Science)" <?= ($profile && strpos($profile['education_level'], 'M.Sc (Science)') !== false)?'selected':'' ?>>M.Sc (Science)</option>
@@ -408,9 +587,8 @@ document.addEventListener('DOMContentLoaded', function() {
     <!-- Conditional dropdown for PhD Course -->
     <div id="phd_course_dropdown" style="display:<?= ($profile && strpos($profile['education_level'], 'PhD') !== false) ? 'block' : 'none' ?>;">
         <label>Select PhD Course:</label>
-        <select id="phd_course" name="phd_course" onchange="toggleOtherField('phd_course', 'phd_course_other_field')" required>
+        <select id="phd_course" name="phd_course" onchange="toggleOtherField('phd_course', 'phd_course_other_field')">
             <option value="">Select Course</option>
-            <!-- Engineering -->
             <option value="PhD in Computer Science / IT" <?= ($profile && strpos($profile['education_level'], 'PhD in Computer Science / IT') !== false)?'selected':'' ?>>PhD in Computer Science / IT</option>
             <option value="PhD in Mechanical Engineering" <?= ($profile && strpos($profile['education_level'], 'PhD in Mechanical Engineering') !== false)?'selected':'' ?>>PhD in Mechanical Engineering</option>
             <option value="PhD in Civil Engineering" <?= ($profile && strpos($profile['education_level'], 'PhD in Civil Engineering') !== false)?'selected':'' ?>>PhD in Civil Engineering</option>
@@ -421,42 +599,14 @@ document.addEventListener('DOMContentLoaded', function() {
             <option value="PhD in Environmental Engineering" <?= ($profile && strpos($profile['education_level'], 'PhD in Environmental Engineering') !== false)?'selected':'' ?>>PhD in Environmental Engineering</option>
             <option value="PhD in Aerospace / Aeronautical Engineering" <?= ($profile && strpos($profile['education_level'], 'PhD in Aerospace / Aeronautical Engineering') !== false)?'selected':'' ?>>PhD in Aerospace / Aeronautical Engineering</option>
             <option value="PhD in Data Science / AI / ML" <?= ($profile && strpos($profile['education_level'], 'PhD in Data Science / AI / ML') !== false)?'selected':'' ?>>PhD in Data Science / AI / ML</option>
-            <!-- Science -->
             <option value="PhD in Mathematics" <?= ($profile && strpos($profile['education_level'], 'PhD in Mathematics') !== false)?'selected':'' ?>>PhD in Mathematics</option>
             <option value="PhD in Physics" <?= ($profile && strpos($profile['education_level'], 'PhD in Physics') !== false)?'selected':'' ?>>PhD in Physics</option>
             <option value="PhD in Chemistry" <?= ($profile && strpos($profile['education_level'], 'PhD in Chemistry') !== false)?'selected':'' ?>>PhD in Chemistry</option>
             <option value="PhD in Biology / Life Sciences" <?= ($profile && strpos($profile['education_level'], 'PhD in Biology / Life Sciences') !== false)?'selected':'' ?>>PhD in Biology / Life Sciences</option>
             <option value="PhD in Environmental Science" <?= ($profile && strpos($profile['education_level'], 'PhD in Environmental Science') !== false)?'selected':'' ?>>PhD in Environmental Science</option>
-            <option value="PhD in Statistics" <?= ($profile && strpos($profile['education_level'], 'PhD in Statistics') !== false)?'selected':'' ?>>PhD in Statistics</option>
-            <!-- Arts, Humanities & Social Sciences -->
-            <option value="PhD in English" <?= ($profile && strpos($profile['education_level'], 'PhD in English') !== false)?'selected':'' ?>>PhD in English</option>
             <option value="PhD in Economics" <?= ($profile && strpos($profile['education_level'], 'PhD in Economics') !== false)?'selected':'' ?>>PhD in Economics</option>
-            <option value="PhD in History" <?= ($profile && strpos($profile['education_level'], 'PhD in History') !== false)?'selected':'' ?>>PhD in History</option>
-            <option value="PhD in Political Science" <?= ($profile && strpos($profile['education_level'], 'PhD in Political Science') !== false)?'selected':'' ?>>PhD in Political Science</option>
-            <option value="PhD in Sociology" <?= ($profile && strpos($profile['education_level'], 'PhD in Sociology') !== false)?'selected':'' ?>>PhD in Sociology</option>
-            <option value="PhD in Psychology" <?= ($profile && strpos($profile['education_level'], 'PhD in Psychology') !== false)?'selected':'' ?>>PhD in Psychology</option>
-            <option value="PhD in Philosophy" <?= ($profile && strpos($profile['education_level'], 'PhD in Philosophy') !== false)?'selected':'' ?>>PhD in Philosophy</option>
-            <option value="PhD in Education" <?= ($profile && strpos($profile['education_level'], 'PhD in Education') !== false)?'selected':'' ?>>PhD in Education</option>
-            <!-- Commerce, Management & Law -->
-            <option value="PhD in Commerce" <?= ($profile && strpos($profile['education_level'], 'PhD in Commerce') !== false)?'selected':'' ?>>PhD in Commerce</option>
             <option value="PhD in Management / Business Administration" <?= ($profile && strpos($profile['education_level'], 'PhD in Management / Business Administration') !== false)?'selected':'' ?>>PhD in Management / Business Administration</option>
-            <option value="PhD in Finance" <?= ($profile && strpos($profile['education_level'], 'PhD in Finance') !== false)?'selected':'' ?>>PhD in Finance</option>
-            <option value="PhD in Marketing" <?= ($profile && strpos($profile['education_level'], 'PhD in Marketing') !== false)?'selected':'' ?>>PhD in Marketing</option>
-            <option value="PhD in Human Resource Management" <?= ($profile && strpos($profile['education_level'], 'PhD in Human Resource Management') !== false)?'selected':'' ?>>PhD in Human Resource Management</option>
-            <option value="PhD in Law" <?= ($profile && strpos($profile['education_level'], 'PhD in Law') !== false)?'selected':'' ?>>PhD in Law</option>
-            <!-- Medical & Allied -->
-            <option value="PhD in Medical Sciences" <?= ($profile && strpos($profile['education_level'], 'PhD in Medical Sciences') !== false)?'selected':'' ?>>PhD in Medical Sciences</option>
-            <option value="PhD in Pharmacy" <?= ($profile && strpos($profile['education_level'], 'PhD in Pharmacy') !== false)?'selected':'' ?>>PhD in Pharmacy</option>
-            <option value="PhD in Nursing" <?= ($profile && strpos($profile['education_level'], 'PhD in Nursing') !== false)?'selected':'' ?>>PhD in Nursing</option>
-            <option value="PhD in Public Health" <?= ($profile && strpos($profile['education_level'], 'PhD in Public Health') !== false)?'selected':'' ?>>PhD in Public Health</option>
-            <!-- Agriculture & Allied -->
-            <option value="PhD in Agriculture" <?= ($profile && strpos($profile['education_level'], 'PhD in Agriculture') !== false)?'selected':'' ?>>PhD in Agriculture</option>
-            <option value="PhD in Horticulture" <?= ($profile && strpos($profile['education_level'], 'PhD in Horticulture') !== false)?'selected':'' ?>>PhD in Horticulture</option>
-            <option value="PhD in Animal Science" <?= ($profile && strpos($profile['education_level'], 'PhD in Animal Science') !== false)?'selected':'' ?>>PhD in Animal Science</option>
-            <option value="PhD in Veterinary Science" <?= ($profile && strpos($profile['education_level'], 'PhD in Veterinary Science') !== false)?'selected':'' ?>>PhD in Veterinary Science</option>
-            <!-- Design & Interdisciplinary -->
-            <option value="PhD in Design" <?= ($profile && strpos($profile['education_level'], 'PhD in Design') !== false)?'selected':'' ?>>PhD in Design</option>
-            <option value="PhD in Interdisciplinary Studies" <?= ($profile && strpos($profile['education_level'], 'PhD in Interdisciplinary Studies') !== false)?'selected':'' ?>>PhD in Interdisciplinary Studies</option>
+            <option value="PhD in Commerce" <?= ($profile && strpos($profile['education_level'], 'PhD in Commerce') !== false)?'selected':'' ?>>PhD in Commerce</option>
             <option value="Other" <?= ($profile && strpos($profile['education_level'], 'Other') !== false && strpos($profile['education_level'], 'PhD') !== false)?'selected':'' ?>>Other</option>
         </select><br><br>
         
@@ -501,7 +651,7 @@ document.addEventListener('DOMContentLoaded', function() {
     </select><br><br>
     
     District:
-    <select id="district" name="district_id" disabled required>
+    <select id="district" name="district_id" required>
         <option value="">Select District</option>
     </select><br><br>
     
@@ -553,6 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <input type="tel" name="parent_contact" placeholder="Parent / Guardian Contact (Mobile / Phone)" value="<?= $profile['parent_contact'] ?? '' ?>"><br><br>
     
     <button type="submit" name="save_profile">Save Profile</button>
+</form>
     </div>
 
     <!-- Footer -->

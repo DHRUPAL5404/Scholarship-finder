@@ -2,11 +2,35 @@
 session_start();
 include "db.php";
 
-// Check if user is admin
-if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
-    echo "Access Denied. Admin only.";
-    exit();
-}
+// Disable mysqli exceptions to prevent fatal errors
+mysqli_report(MYSQLI_REPORT_OFF);
+
+// Create users table
+$users_table = "CREATE TABLE IF NOT EXISTS users (
+    user_id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    mobile VARCHAR(20),
+    password VARCHAR(255) NOT NULL,
+    role ENUM('student', 'admin') DEFAULT 'student',
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+)";
+
+// Create states table
+$states_table = "CREATE TABLE IF NOT EXISTS states (
+    state_id INT PRIMARY KEY AUTO_INCREMENT,
+    state_name VARCHAR(255) NOT NULL UNIQUE
+)";
+
+// Create districts table
+$districts_table = "CREATE TABLE IF NOT EXISTS districts (
+    district_id INT PRIMARY KEY AUTO_INCREMENT,
+    state_id INT NOT NULL,
+    district_name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (state_id) REFERENCES states(state_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_district (state_id, district_name)
+)";
 
 // Create scholarships table
 $scholarships_table = "CREATE TABLE IF NOT EXISTS scholarships (
@@ -25,6 +49,34 @@ $scholarships_table = "CREATE TABLE IF NOT EXISTS scholarships (
     FOREIGN KEY (state_id) REFERENCES states(state_id) ON DELETE SET NULL
 )";
 
+// Create student_profile table
+$student_profile_table = "CREATE TABLE IF NOT EXISTS student_profile (
+    profile_id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL UNIQUE,
+    full_name VARCHAR(255),
+    email VARCHAR(255),
+    education_level VARCHAR(255),
+    marks DECIMAL(5,2),
+    family_income INT,
+    category VARCHAR(100),
+    gender VARCHAR(50),
+    state_id INT,
+    district_id INT,
+    institution_type VARCHAR(100),
+    age INT,
+    disability_type VARCHAR(100) DEFAULT 'None',
+    disability_percent INT DEFAULT 0,
+    minority_status VARCHAR(10),
+    parent_name VARCHAR(255),
+    parent_occupation VARCHAR(255),
+    parent_contact VARCHAR(20),
+    course VARCHAR(255),
+    current_year VARCHAR(50),
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+)";
+
 // Create scholarship_applications table
 $applications_table = "CREATE TABLE IF NOT EXISTS scholarship_applications (
     application_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -39,11 +91,39 @@ $applications_table = "CREATE TABLE IF NOT EXISTS scholarship_applications (
 
 $results = array();
 
+// Execute users table creation
+if(mysqli_query($conn, $users_table)) {
+    $results[] = "✓ Users table created/verified";
+} else {
+    $results[] = "✗ Error creating users table: " . mysqli_error($conn);
+}
+
+// Execute states table creation
+if(mysqli_query($conn, $states_table)) {
+    $results[] = "✓ States table created/verified";
+} else {
+    $results[] = "✗ Error creating states table: " . mysqli_error($conn);
+}
+
+// Execute districts table creation
+if(mysqli_query($conn, $districts_table)) {
+    $results[] = "✓ Districts table created/verified";
+} else {
+    $results[] = "✗ Error creating districts table: " . mysqli_error($conn);
+}
+
 // Execute scholarships table creation
 if(mysqli_query($conn, $scholarships_table)) {
     $results[] = "✓ Scholarships table created/verified";
 } else {
     $results[] = "✗ Error creating scholarships table: " . mysqli_error($conn);
+}
+
+// Execute student profile table creation
+if(mysqli_query($conn, $student_profile_table)) {
+    $results[] = "✓ Student profile table created/verified";
+} else {
+    $results[] = "✗ Error creating student profile table: " . mysqli_error($conn);
 }
 
 // Execute applications table creation
@@ -66,14 +146,45 @@ $indexes = array(
     "CREATE INDEX IF NOT EXISTS idx_scholarship_status ON scholarships(status)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_deadline ON scholarships(deadline)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_category ON scholarships(category)",
-    "CREATE INDEX IF NOT EXISTS idx_scholarship_education ON scholarships(education_level)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_state ON scholarships(state_id)",
     "CREATE INDEX IF NOT EXISTS idx_applications_user ON scholarship_applications(user_id)"
 );
 
 foreach($indexes as $index_query) {
-    if(mysqli_query($conn, $index_query)) {
-        $results[] = "✓ Index verified";
+    @mysqli_query($conn, $index_query);
+}
+
+// Insert sample states if table is empty
+$state_count = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM states"));
+if($state_count['count'] == 0) {
+    $states_data = "INSERT INTO states (state_name) VALUES 
+    ('Andhra Pradesh'), ('Arunachal Pradesh'), ('Assam'), ('Bihar'), ('Chhattisgarh'),
+    ('Goa'), ('Gujarat'), ('Haryana'), ('Himachal Pradesh'), ('Jharkhand'),
+    ('Karnataka'), ('Kerala'), ('Madhya Pradesh'), ('Maharashtra'), ('Manipur'),
+    ('Meghalaya'), ('Mizoram'), ('Nagaland'), ('Odisha'), ('Punjab'),
+    ('Rajasthan'), ('Sikkim'), ('Tamil Nadu'), ('Telangana'), ('Tripura'),
+    ('Uttar Pradesh'), ('Uttarakhand'), ('West Bengal'), ('Delhi'), ('Puducherry')";
+    
+    if(mysqli_query($conn, $states_data)) {
+        $results[] = "✓ Sample states inserted";
+    }
+}
+
+// Insert sample districts if table is empty
+$district_count = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM districts"));
+if($district_count['count'] == 0) {
+    $districts_data = "INSERT INTO districts (state_id, district_name) VALUES 
+    (1, 'Visakhapatnam'), (1, 'Krishna'), (1, 'Guntur'), (1, 'Nellore'),
+    (11, 'Bangalore'), (11, 'Mysore'), (11, 'Belgaum'), (11, 'Mangalore'),
+    (12, 'Thiruvananthapuram'), (12, 'Ernakulam'), (12, 'Kottayam'), (12, 'Kozhikode'),
+    (14, 'Mumbai'), (14, 'Pune'), (14, 'Nagpur'), (14, 'Aurangabad'),
+    (27, 'Lucknow'), (27, 'Varanasi'), (27, 'Kanpur'), (27, 'Agra'),
+    (28, 'Dehradun'), (28, 'Haridwar'), (28, 'Nainital'),
+    (29, 'Kolkata'), (29, 'Howrah'), (29, 'Darjeeling'), (29, 'Asansol'),
+    (30, 'New Delhi'), (30, 'North Delhi')";
+    
+    if(mysqli_query($conn, $districts_data)) {
+        $results[] = "✓ Sample districts inserted";
     }
 }
 
@@ -104,6 +215,7 @@ if($count['count'] == 0) {
 <html>
 <head>
     <title>Database Setup - ScholarMatch</title>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
     <style>
         body {
             font-family: Arial, sans-serif;
