@@ -4,6 +4,10 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     header("Location: login.php");
     exit();
 }
+
+$flash_success = $_SESSION['flash_success'] ?? '';
+$flash_error = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,6 +37,12 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
 
     <div class="container">
         <h2>Manage Scholarships</h2>
+        <?php if($flash_success): ?>
+            <div class="alert success"><?php echo htmlspecialchars($flash_success); ?></div>
+        <?php endif; ?>
+        <?php if($flash_error): ?>
+            <div class="alert danger"><?php echo htmlspecialchars($flash_error); ?></div>
+        <?php endif; ?>
         <?php
         include "db.php";
         $result = mysqli_query($conn,"SELECT * FROM scholarships");

@@ -69,24 +69,42 @@ if(!$student){
                     $field = $rule['field_name'];
                     $operator = $rule['operator'];
                     $value = $rule['value'];
-                    
-                    $student_value = $student[$field];
+
+                    if(!array_key_exists($field, $student)){
+                        continue;
+                    }
+
+                    $student_value = trim((string)$student[$field]);
+                    $rule_value = trim((string)$value);
+
+                    // Non-restrictive values
+                    if(strcasecmp($rule_value, 'All') === 0 || strcasecmp($rule_value, 'All India') === 0){
+                        continue;
+                    }
+
+                    // Comma-separated equality values behave like set membership
+                    if($operator === '=' && strpos($rule_value, ',') !== false){
+                        $allowed_values = array_map('trim', explode(',', $rule_value));
+                        if(!in_array($student_value, $allowed_values, true)) $eligible = false;
+                        if(!$eligible) break;
+                        continue;
+                    }
                     
                     switch($operator){
                         case '=':
-                            if($student_value != $value) $eligible = false;
+                            if($student_value != $rule_value) $eligible = false;
                             break;
                         case '>=':
-                            if($student_value < $value) $eligible = false;
+                            if($student_value < $rule_value) $eligible = false;
                             break;
                         case '<=':
-                            if($student_value > $value) $eligible = false;
+                            if($student_value > $rule_value) $eligible = false;
                             break;
                         case '>':
-                            if($student_value <= $value) $eligible = false;
+                            if($student_value <= $rule_value) $eligible = false;
                             break;
                         case '<':
-                            if($student_value >= $value) $eligible = false;
+                            if($student_value >= $rule_value) $eligible = false;
                             break;
                     }
                     

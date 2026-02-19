@@ -13,6 +13,10 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
 
 $user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'];
+$flash_success = $_SESSION['flash_success'] ?? '';
+$flash_error = $_SESSION['flash_error'] ?? '';
+$profile_success = $_SESSION['profile_success'] ?? '';
+unset($_SESSION['flash_success'], $_SESSION['flash_error'], $_SESSION['profile_success']);
 
 // Fetch student profile (safer)
 $profile_query = mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=" . intval($user_id));
@@ -73,40 +77,39 @@ if(!$table_check) {
 
 // Function to determine eligibility (safe checks)
 function checkEligibility($scholarship, $student_profile) {
-    $eligibility = ['eligible' => true, 'reasons' => []];
+    $eligibility = ['status' => 'eligible', 'issues' => []];
 
     $s_cat = $scholarship['category'] ?? null;
     $p_cat = $student_profile['category'] ?? null;
     if ($s_cat && $s_cat !== 'General' && $p_cat !== $s_cat) {
-        $eligibility['eligible'] = false;
-        $eligibility['reasons'][] = 'Category mismatch';
+        $eligibility['issues'][] = 'Category mismatch';
     }
 
     $min_marks = intval($scholarship['min_marks'] ?? 0);
     $stu_marks = intval($student_profile['marks'] ?? 0);
     if ($min_marks > 0 && $stu_marks < $min_marks) {
-        $eligibility['eligible'] = false;
-        $eligibility['reasons'][] = 'Insufficient marks';
+        $eligibility['issues'][] = 'Insufficient marks';
     }
 
     $max_income = intval($scholarship['max_family_income'] ?? 0);
     $stu_income = intval($student_profile['family_income'] ?? 0);
     if ($max_income > 0 && $stu_income > $max_income) {
-        $eligibility['eligible'] = false;
-        $eligibility['reasons'][] = 'Family income exceeds limit';
+        $eligibility['issues'][] = 'Family income exceeds limit';
     }
 
     $req_edu = $scholarship['education_level'] ?? null;
     $stu_edu = $student_profile['education_level'] ?? null;
     if ($req_edu && $stu_edu && stripos($req_edu, $stu_edu) === false) {
-        $eligibility['eligible'] = false;
-        $eligibility['reasons'][] = 'Education level mismatch';
+        $eligibility['issues'][] = 'Education level mismatch';
     }
 
     $req_state = $scholarship['state_id'] ?? null;
     if ($req_state && $req_state != ($student_profile['state_id'] ?? null)) {
-        $eligibility['eligible'] = false;
-        $eligibility['reasons'][] = 'State mismatch';
+        $eligibility['issues'][] = 'State mismatch';
+    }
+
+    if (count($eligibility['issues']) > 0) {
+        $eligibility['status'] = 'not_eligible';
     }
 
     return $eligibility;
@@ -190,6 +193,24 @@ try {
     </div>
     
     <!-- Alerts -->
+    <?php if($flash_success): ?>
+    <div class="alert success">
+        <?php echo htmlspecialchars($flash_success); ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if($profile_success): ?>
+    <div class="alert success">
+        <?php echo htmlspecialchars($profile_success); ?>
+    </div>
+    <?php endif; ?>
+
+    <?php if($flash_error): ?>
+    <div class="alert danger">
+        <?php echo htmlspecialchars($flash_error); ?>
+    </div>
+    <?php endif; ?>
+
     <?php if($expiring_count > 0): ?>
     <div class="alert">
          <strong><?php echo $expiring_count; ?> scholarships</strong> are expiring within the next 7 days!
@@ -213,9 +234,9 @@ try {
     
     <!-- Scholarships Display -->
     <div id="cardView">
-        <?php if($total_scholarships > 0 && $scholarships_result): ?>
+        <?php if($total_scholarships > 0 && !empty($scholarships)): ?>
         <div class="scholarships-grid">
-            <?php while($scholarship = mysqli_fetch_assoc($scholarships_result)): ?>
+            <?php foreach($scholarships as $scholarship): ?>
             <?php 
                 $eligibility = checkEligibility($scholarship, $profile);
                 $days_left = round((strtotime($scholarship['deadline']) - time()) / (60 * 60 * 24));
@@ -263,7 +284,7 @@ try {
                     <?php endif; ?>
                 </div>
             </div>
-            <?php endwhile; ?>
+            <?php endforeach; ?>
         </div>
         <?php else: ?>
         <div class="no-scholarships">

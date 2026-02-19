@@ -1,5 +1,42 @@
 ﻿<?php
 session_start();
+include "db.php";
+
+$login_error = '';
+$flash_success = $_SESSION['flash_success'] ?? '';
+$flash_error = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash_success']);
+unset($_SESSION['flash_error']);
+
+if(isset($_POST['login'])){
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
+    $password = $_POST['password'];
+
+    $query = "SELECT * FROM users WHERE email='$email'";
+    $result = mysqli_query($conn, $query);
+
+    if($result && mysqli_num_rows($result) == 1){
+        $row = mysqli_fetch_assoc($result);
+
+        if(password_verify($password, $row['password'])){
+            $_SESSION['user_id'] = $row['user_id'];
+            $_SESSION['user_name'] = $row['name'];
+            $_SESSION['role'] = $row['role'];
+            $_SESSION['flash_success'] = "Login successful.";
+
+            if($row['role'] == 'student'){
+                header("Location: student_dashboard.php");
+            } else {
+                header("Location: admin_dashboard.php");
+            }
+            exit();
+        } else {
+            $login_error = "Invalid email or password.";
+        }
+    } else {
+        $login_error = "User not found.";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -30,6 +67,15 @@ session_start();
     <!-- Login Form Content -->
     <main>
         <h2>Login to ScholarMatch</h2>
+        <?php if($flash_success): ?>
+            <div class="alert success"><?php echo htmlspecialchars($flash_success); ?></div>
+        <?php endif; ?>
+        <?php if($flash_error): ?>
+            <div class="alert danger"><?php echo htmlspecialchars($flash_error); ?></div>
+        <?php endif; ?>
+        <?php if($login_error): ?>
+            <div class="alert danger"><?php echo htmlspecialchars($login_error); ?></div>
+        <?php endif; ?>
         <form method="post" action="login.php">
             <input type="email" name="email" placeholder="Email" required><br><br>
             <input type="password" name="password" placeholder="Password" required><br><br>
@@ -61,43 +107,3 @@ session_start();
 
 </body>
 </html>
-
-<?php
-include "db.php";
-
-if(isset($_POST['login'])){
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-
-    // Fetch user by email
-    $query = "SELECT * FROM users WHERE email='$email'";
-    $result = mysqli_query($conn,$query);
-
-    if(!$result){
-        die("SQL Error: " . mysqli_error($conn));
-    }
-
-    if(mysqli_num_rows($result) == 1){
-        $row = mysqli_fetch_assoc($result);
-
-        // Verify hashed password
-        if(password_verify($password, $row['password'])){
-            $_SESSION['user_id'] = $row['user_id'];
-            $_SESSION['user_name'] = $row['name'];
-            $_SESSION['role'] = $row['role'];
-
-            // Redirect based on role
-            if($row['role'] == 'student'){
-                header("Location: student_dashboard.php");
-            } else if($row['role'] == 'admin'){
-                header("Location: admin_dashboard.php");
-            }
-            exit();
-        } else {
-            echo "Invalid email or password";
-        }
-    } else {
-        echo "User not found";
-    }
-}
-?>

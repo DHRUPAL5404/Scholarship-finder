@@ -28,7 +28,8 @@ if(isset($_POST['check'])){
     while($r=mysqli_fetch_assoc($rules)){
         $field = trim($r['field_name']);
         $operator = trim($r['operator']);
-        $value = mysqli_real_escape_string($conn, $r['value']);
+        $raw_value = trim($r['value']);
+        $value = mysqli_real_escape_string($conn, $raw_value);
 
         // Skip rules whose field does not exist in current student_profile schema
         if(!isset($valid_fields[$field])){
@@ -38,6 +39,23 @@ if(isset($_POST['check'])){
         // Fallback to '=' if operator is missing/invalid
         if(!in_array($operator, $allowed_operators, true)){
             $operator = '=';
+        }
+
+        // 'All' style values are non-restrictive
+        if(strcasecmp($raw_value, 'All') === 0 || strcasecmp($raw_value, 'All India') === 0){
+            continue;
+        }
+
+        // Comma-separated values with '=' should behave like IN (...)
+        if($operator === '=' && strpos($raw_value, ',') !== false){
+            $parts = array_filter(array_map('trim', explode(',', $raw_value)), function($v){ return $v !== ''; });
+            if(count($parts) > 0){
+                $escaped_parts = array_map(function($p) use ($conn){
+                    return "'" . mysqli_real_escape_string($conn, $p) . "'";
+                }, $parts);
+                $conditions[] = "sp.`$field` IN (" . implode(',', $escaped_parts) . ")";
+            }
+            continue;
         }
 
         $conditions[] = "sp.`$field` $operator '$value'";
