@@ -19,13 +19,13 @@ if(isset($_POST['register'])){
     if($result && mysqli_num_rows($result) > 0){
         $register_error = "Email already registered!";
     } else {
-        $query = "INSERT INTO users (name,email,mobile,password,role) 
+        $query = "INSERT INTO users (full_name,email,mobile,password,role) 
                   VALUES ('$name','$email','$mobile','$password','student')";
 
         if(mysqli_query($conn, $query)){
             $user_id = mysqli_insert_id($conn);
-            $profile_query = "INSERT INTO student_profile (user_id, full_name, email) 
-                              VALUES ($user_id, '$name', '$email')";
+            $profile_query = "INSERT INTO student_profile (user_id, full_name) 
+                              VALUES ($user_id, '$name')";
 
             if(mysqli_query($conn, $profile_query)){
                 $_SESSION['flash_success'] = "Registration successful. Please login.";

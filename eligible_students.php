@@ -61,7 +61,7 @@ if(isset($_POST['check'])){
         $conditions[] = "sp.`$field` $operator '$value'";
     }
 
-    $sql="SELECT u.name,sp.* FROM student_profile sp 
+    $sql="SELECT u.full_name, u.email, sp.* FROM student_profile sp 
           JOIN users u ON u.user_id=sp.user_id";
 
     if($conditions){
@@ -139,7 +139,7 @@ if(isset($_POST['check'])){
                     <tbody>
                         <?php foreach($eligible_students as $st): ?>
                             <tr>
-                                <td><?= htmlspecialchars($st['name'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($st['full_name'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($st['email'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($st['marks'] ?? '') ?>%</td>
                                 <td><?= htmlspecialchars($st['category'] ?? '') ?></td>

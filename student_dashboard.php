@@ -248,7 +248,7 @@ try {
                 </div>
                 
                 <div class="card-body">
-                    <p><strong>Amount:</strong> ₹<?php echo number_format($scholarship['amount']); ?></p>
+                   
                     <p><?php echo htmlspecialchars(substr($scholarship['description'], 0, 100)); ?>...</p>
                     
                     <div class="deadline-badge <?php echo $is_urgent ? 'urgent' : ''; ?>">
