@@ -13,7 +13,7 @@ if(isset($_POST['login'])){
     $password = $_POST['password'];
 
     // Use prepared statement to prevent SQL injection
-    $stmt = $conn->prepare("SELECT user_id, name, password, role FROM users WHERE email = ?");
+    $stmt = $conn->prepare("SELECT user_id, full_name, password, role FROM users WHERE email = ?");
     if (!$stmt) {
         $login_error = "Database error: " . $conn->error;
     } else {
@@ -26,7 +26,7 @@ if(isset($_POST['login'])){
 
             if(password_verify($password, $row['password'])){
                 $_SESSION['user_id'] = $row['user_id'];
-                $_SESSION['user_name'] = $row['name'];
+                $_SESSION['user_name'] = $row['full_name'];
                 $_SESSION['role'] = $row['role'];
                 $_SESSION['flash_success'] = "Login successful.";
 
