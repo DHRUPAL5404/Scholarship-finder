@@ -35,3 +35,64 @@ main form {
 .input-wrapper textarea {
     width: 100%;
 }
+
+/* ===== RESPONSIVE AUTH PAGES ===== */
+@media (max-width: 768px) {
+    main {
+        width: 100%;
+        margin: 1rem 0;
+        padding: 0 1rem;
+    }
+
+    main h2 {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    main form {
+        padding: 1.5rem;
+        border-radius: 6px;
+    }
+
+    .input-wrapper {
+        margin-bottom: 1rem;
+    }
+
+    .input-wrapper label {
+        font-size: 0.9rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .input-wrapper input,
+    .input-wrapper select,
+    .input-wrapper textarea {
+        font-size: 16px;
+        padding: 0.65rem 0.75rem;
+    }
+
+    button {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        width: 100%;
+    }
+
+    .error-message {
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .password-feedback {
+        margin-top: 0.75rem;
+        padding: 1rem;
+    }
+
+    .password-requirements {
+        margin-top: 0.75rem;
+    }
+
+    .password-requirements .requirement {
+        font-size: 0.85rem;
+        padding: 0.25rem 0;
+    }
+}

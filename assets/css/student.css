@@ -176,11 +176,30 @@
 /* ===== NO DATA MESSAGES ===== */
 .no-scholarships {
     text-align: center;
-    padding: 3rem;
-    background: white;
-    border-radius: 8px;
+    padding: 4rem 2rem;
+    background: linear-gradient(135deg, #f8fbff, #f0f7ff);
+    border: 2px dashed var(--medium-gray);
+    border-radius: 12px;
     color: var(--dark-gray);
     font-size: 1.1rem;
+    margin: 2rem 0;
+}
+
+.no-scholarships::before {
+    content: '🔍';
+    display: block;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+.no-scholarships::after {
+    content: 'Check back soon for more opportunities!';
+    display: block;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin-top: 1rem;
+    font-weight: 500;
 }
 
 /* ===== PAGINATION ===== */
@@ -259,4 +278,74 @@
 
 .profile-form button[type="submit"] {
     margin-top: 0.5rem;
+}
+
+/* ===== RESPONSIVE STUDENT PAGES ===== */
+@media (max-width: 1024px) {
+    .scholarships-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .scholarships-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .scholarship-card {
+        margin-bottom: 0;
+    }
+
+    .card-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .btn-details, .btn-apply {
+        width: 100%;
+        text-align: center;
+    }
+
+    .pagination {
+        gap: 0.25rem;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .profile-page {
+        max-width: 100%;
+    }
+
+    .profile-form {
+        max-width: 100%;
+        padding: 1rem;
+    }
+
+    .no-scholarships {
+        padding: 2rem 1rem;
+        font-size: 1rem;
+    }
+
+    .no-scholarships::before {
+        font-size: 2.5rem;
+    }
+
+    .header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .header-actions a {
+        width: 100%;
+    }
 }

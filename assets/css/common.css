@@ -259,3 +259,84 @@ footer .copyright {
 .p-1 { padding: 0.5rem; }
 .p-2 { padding: 1rem; }
 .p-3 { padding: 2rem; }
+
+/* ===== RESPONSIVE COMMON STYLES ===== */
+@media (max-width: 1024px) {
+    .container {
+        padding: 0 1.5rem;
+    }
+
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+    h3 { font-size: 1.5rem; }
+}
+
+@media (max-width: 768px) {
+    nav {
+        padding: 0.75rem 1rem;
+    }
+
+    nav ul {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    nav ul li a {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .container {
+        margin: 1rem auto;
+        padding: 0 1rem;
+    }
+
+    h1 { font-size: 1.75rem; }
+    h2 { font-size: 1.5rem; }
+    h3 { font-size: 1.25rem; }
+    h4 { font-size: 1.1rem; }
+
+    form {
+        padding: 1.5rem;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    input[type="tel"],
+    textarea,
+    select {
+        padding: 0.65rem 0.75rem;
+        font-size: 16px;
+    }
+
+    button, .btn,
+    input[type="submit"],
+    input[type="button"] {
+        width: 100%;
+        padding: 0.75rem 1rem;
+    }
+
+    footer {
+        padding: 2rem 1rem;
+        gap: 1.5rem;
+        grid-template-columns: 1fr;
+    }
+
+    footer h4 {
+        font-size: 1rem;
+    }
+
+    footer .copyright {
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .alert {
+        flex-direction: column;
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}

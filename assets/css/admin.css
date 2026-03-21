@@ -81,6 +81,7 @@ table {
     overflow: hidden;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     margin: 1rem 0;
+    border-collapse: collapse;
 }
 
 thead {
@@ -88,14 +89,139 @@ thead {
     color: white;
 }
 
-th, td {
+th {
+    padding: 1.25rem 1rem;
+    text-align: left;
+    border-bottom: 2px solid #2c3e50;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+td {
     padding: 1rem;
     text-align: left;
     border-bottom: 1px solid var(--medium-gray);
+    color: var(--text-color);
 }
 
-tr:hover {
-    background: var(--light-gray);
+tbody tr {
+    transition: all 0.2s ease;
+}
+
+tbody tr:hover {
+    background: rgba(52, 152, 219, 0.05);
+    box-shadow: inset 0 0 0 1px var(--light-gray);
+}
+
+tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* ===== DASHBOARD FILTERS ===== */
+.dashboard-filter {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.dashboard-filter select {
+    flex: 1;
+    min-width: 200px;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--medium-gray);
+    border-radius: 6px;
+    background: white;
+    color: var(--text-color);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.dashboard-filter select:hover {
+    border-color: var(--secondary-color);
+}
+
+.dashboard-filter select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+}
+
+.dashboard-filter button {
+    padding: 0.75rem 2rem;
+    background: linear-gradient(135deg, var(--secondary-color), #2980b9);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.dashboard-filter button:hover {
+    background: linear-gradient(135deg, #2980b9, var(--secondary-color));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.dashboard-filter button:active {
+    transform: translateY(0);
+}
+
+/* ===== DASHBOARD ALERTS ===== */
+.dashboard-alert {
+    padding: 1.25rem 1.5rem;
+    margin: 1.5rem 0;
+    border-radius: 6px;
+    border-left: 4px solid var(--medium-gray);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-weight: 500;
+}
+
+.dashboard-alert.info {
+    background: rgba(52, 152, 219, 0.08);
+    border-left-color: var(--secondary-color);
+    color: #1565c0;
+}
+
+.dashboard-alert.success {
+    background: rgba(39, 174, 96, 0.08);
+    border-left-color: var(--success-color);
+    color: #2e7d32;
+}
+
+.dashboard-alert.warning {
+    background: rgba(243, 156, 18, 0.08);
+    border-left-color: var(--warning-color);
+    color: #ef6c00;
+}
+
+.dashboard-alert.error {
+    background: rgba(231, 76, 60, 0.08);
+    border-left-color: var(--danger-color);
+    color: #d32f2f;
+}
+
+.dashboard-alert::before {
+    content: '';
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    border-radius: 50%;
+    opacity: 0.3;
+    flex-shrink: 0;
 }
 
 /* ===== DB STATUS / SETUP ===== */
@@ -307,9 +433,21 @@ tr:hover {
 
 .rules-empty {
     text-align: center;
-    padding: 2rem;
+    padding: 3rem 2rem;
     color: var(--dark-gray);
     font-style: italic;
+    background: #f8fbff;
+    border: 2px dashed var(--medium-gray);
+    border-radius: 8px;
+    margin: 2rem 0;
+}
+
+.rules-empty::before {
+    content: '📋';
+    display: block;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
 }
 
 /* Home Page Styles - Hero & Sections */
@@ -456,4 +594,160 @@ section {
 #cta a:hover {
     transform: translateY(-3px);
     box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1024px) {
+    .scholarship-card {
+        flex-basis: calc(50% - 1rem);
+    }
+
+    #features {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    #how-it-works {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+
+    .dashboard-filter {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .dashboard-filter select,
+    .dashboard-filter button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    nav ul {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    nav ul li a {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.9rem;
+    }
+
+    .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+    }
+
+    .header-actions {
+        justify-content: center;
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .header-actions a {
+        width: 100%;
+        text-align: center;
+    }
+
+    .dashboard-filter {
+        flex-direction: column;
+    }
+
+    .dashboard-filter select,
+    .dashboard-filter button {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .dashboard-filter button:last-child {
+        margin-bottom: 0;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
+
+    th, td {
+        padding: 0.75rem 0.5rem;
+    }
+
+    th {
+        font-size: 0.8rem;
+        padding: 0.75rem 0.5rem;
+    }
+
+    .scholarship-card {
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-links a {
+        padding: 0.7rem 0.5rem;
+        font-size: 0.95rem;
+    }
+
+    .manage-scholarship-card {
+        padding: 0.75rem 0.8rem;
+    }
+
+    .pagination {
+        gap: 0.25rem;
+    }
+
+    .pagination a,
+    .pagination span {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.9rem;
+    }
+
+    #hero {
+        padding: 2rem 1rem;
+    }
+
+    #hero h1 {
+        font-size: 2rem;
+    }
+
+    #hero p {
+        font-size: 1rem;
+    }
+
+    #hero a {
+        padding: 0.75rem 1.5rem;
+        margin: 0.5rem 0.3rem;
+        font-size: 0.9rem;
+    }
+
+    #features {
+        grid-template-columns: 1fr;
+    }
+
+    #how-it-works {
+        grid-template-columns: 1fr;
+    }
+
+    .rule-section {
+        padding: 1rem;
+    }
+
+    .rule-section form {
+        grid-template-columns: 1fr;
+    }
+
+    .rule-section form button {
+        width: 100%;
+    }
+
+    .modal, .dialog {
+        width: 90% !important;
+    }
+
+    footer {
+        grid-template-columns: 1fr;
+        padding: 2rem 1rem;
+    }
 }
