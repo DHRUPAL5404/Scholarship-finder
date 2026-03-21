@@ -19,21 +19,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="index.php#how-it-works">How It Works</a></li>
-            <li><a href="index.php#features">Features</a></li>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <li><a href="admin_dashboard.php">Dashboard</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            <?php else: ?>
-                <li><a href="login.php">Login</a></li>
-                <li><a href="register.php">Register</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
+    <?php include "includes/navbar.php"; ?>
 
     <div class="container">
         <h2>Manage Scholarships</h2>
@@ -56,30 +42,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         <?php } ?>
     </div>
 
-    <!-- Footer -->
-    <footer id="footer">
-        <div>
-            <h4>ScholarMatch</h4>
-            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
-        </div>
-        <div>
-            <h4>Quick Links</h4>
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="admin_dashboard.php">Admin Dashboard</a></li>
-                <li><a href="add_scholarship.php">Add Scholarship</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4>Contact</h4>
-            <p>Email: info@scholarmatch.com</p>
-            <p>Phone: (555) 123-4567</p>
-        </div>
-        <div>
-            <h4>Follow Us</h4>
-            <p>Facebook | Twitter | LinkedIn | Instagram</p>
-        </div>
-    </footer>
+    <?php include "includes/footer.php"; ?>
 
+    <script src="assets/js/validation.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

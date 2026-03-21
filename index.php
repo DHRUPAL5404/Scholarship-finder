@@ -11,21 +11,7 @@ session_start();
 </head>
 <body class="home-page">
 
-    <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="#how-it-works">How It Works</a></li>
-            <li><a href="#features">Features</a></li>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <li><a href="student_dashboard.php">Dashboard</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            <?php else: ?>
-                <li><a href="login.php">Login</a></li>
-                <li><a href="register.php">Register</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
+    <?php include "includes/navbar.php"; ?>
 
     <!-- Hero Section -->
     <section id="hero">
@@ -109,30 +95,8 @@ session_start();
     </section>
 
     <!-- Footer -->
-    <footer id="footer">
-        <div>
-            <h4>ScholarMatch</h4>
-            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
-        </div>
-        <div>
-            <h4>Quick Links</h4>
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="#how-it-works">How It Works</a></li>
-                <li><a href="#features">Features</a></li>
-                <li><a href="login.php">Login</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4>Contact</h4>
-            <p>Email: info@scholarmatch.com</p>
-            <p>Phone: (555) 123-4567</p>
-        </div>
-        <div>
-            <h4>Follow Us</h4>
-            <p>Facebook | Twitter | LinkedIn | Instagram</p>
-        </div>
-    </footer>
+    <?php include "includes/footer.php"; ?>
 
+    <script src="assets/js/validation.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

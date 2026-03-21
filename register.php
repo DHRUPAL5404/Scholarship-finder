@@ -7,35 +7,78 @@ session_start();
 
 $register_error = '';
 
+// Password validation function
+function validatePassword($password) {
+    $errors = [];
+    
+    if (strlen($password) < 8) {
+        $errors[] = "Password must be at least 8 characters long";
+    }
+    
+    if (!preg_match('/[0-9]/', $password)) {
+        $errors[] = "Password must contain at least 1 number";
+    }
+    
+    return $errors;
+}
+
 if(isset($_POST['register'])){
-    $name = mysqli_real_escape_string($conn, $_POST['name']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $mobile = mysqli_real_escape_string($conn, $_POST['mobile']);
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+    $mobile = $_POST['mobile'];
+    $password = $_POST['password'];
 
-    $check = "SELECT * FROM users WHERE email='$email'";
-    $result = mysqli_query($conn, $check);
-
-    if($result && mysqli_num_rows($result) > 0){
-        $register_error = "Email already registered!";
+    // Validate password on server side
+    $password_errors = validatePassword($password);
+    if (!empty($password_errors)) {
+        $register_error = implode(", ", $password_errors);
     } else {
-        $query = "INSERT INTO users (full_name,email,mobile,password,role) 
-                  VALUES ('$name','$email','$mobile','$password','student')";
+        $password = password_hash($password, PASSWORD_DEFAULT);
 
-        if(mysqli_query($conn, $query)){
-            $user_id = mysqli_insert_id($conn);
-            $profile_query = "INSERT INTO student_profile (user_id, full_name) 
-                              VALUES ($user_id, '$name')";
-
-            if(mysqli_query($conn, $profile_query)){
-                $_SESSION['flash_success'] = "Registration successful. Please login.";
-            } else {
-                $_SESSION['flash_success'] = "Registration successful. Please login to complete profile.";
-            }
-            header("Location: login.php");
-            exit();
+        // Use prepared statement to check if email exists
+        $check_stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
+        if (!$check_stmt) {
+            $register_error = "Database error: " . $conn->error;
         } else {
-            $register_error = "Error: " . mysqli_error($conn);
+            $check_stmt->bind_param("s", $email);
+            $check_stmt->execute();
+            $result = $check_stmt->get_result();
+
+            if($result && $result->num_rows > 0){
+                $register_error = "Email already registered!";
+            } else {
+                // Use prepared statement for user registration
+                $stmt = $conn->prepare("INSERT INTO users (full_name, email, mobile, password, role) VALUES (?, ?, ?, ?, ?)");
+                if (!$stmt) {
+                    $register_error = "Database error: " . $conn->error;
+                } else {
+                    $role = 'student';
+                    $stmt->bind_param("sssss", $name, $email, $mobile, $password, $role);
+
+                    if($stmt->execute()){
+                        $user_id = $stmt->insert_id;
+                        $stmt->close();
+
+                        // Use prepared statement for profile creation
+                        $profile_stmt = $conn->prepare("INSERT INTO student_profile (user_id, full_name) VALUES (?, ?)");
+                        if ($profile_stmt) {
+                            $profile_stmt->bind_param("is", $user_id, $name);
+                            if($profile_stmt->execute()){
+                                $_SESSION['flash_success'] = "Registration successful. Please login.";
+                            } else {
+                                $_SESSION['flash_success'] = "Registration successful. Please login to complete profile.";
+                            }
+                            $profile_stmt->close();
+                        }
+                        header("Location: login.php");
+                        exit();
+                    } else {
+                        $register_error = "Error: " . $stmt->error;
+                        $stmt->close();
+                    }
+                }
+            }
+            $check_stmt->close();
         }
     }
 }
@@ -50,61 +93,33 @@ if(isset($_POST['register'])){
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="index.php#how-it-works">How It Works</a></li>
-            <li><a href="index.php#features">Features</a></li>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <li><a href="student_dashboard.php">Dashboard</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            <?php else: ?>
-                <li><a href="login.php">Login</a></li>
-                <li><a href="register.php">Register</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
+    <?php include "includes/navbar.php"; ?>
 
     <main>
         <h2>Create Your Account</h2>
         <?php if($register_error): ?>
             <div class="alert danger"><?php echo htmlspecialchars($register_error); ?></div>
         <?php endif; ?>
-        <form method="post" action="register.php">
-          <input type="text" name="name" placeholder="Full Name" required><br><br>
-          <input type="email" name="email" placeholder="Email" required><br><br>
-          <input type="text" name="mobile" placeholder="Mobile Number" required><br><br>
-          <input type="password" name="password" placeholder="Password" required><br><br>
+        <form method="post" action="register.php" id="register-form">
+          <div class="input-wrapper">
+            <input type="text" name="name" placeholder="Full Name" required>
+          </div>
+          <div class="input-wrapper">
+            <input type="email" name="email" placeholder="Email" required>
+          </div>
+          <div class="input-wrapper">
+            <input type="text" name="mobile" placeholder="Mobile Number" required>
+          </div>
+          <div class="input-wrapper">
+            <input type="password" name="password" placeholder="Password (Min 8 chars, at least 1 number)" required>
+          </div>
           <button type="submit" name="register">Register</button>
         </form>
     </main>
 
-    <!-- Footer -->
-    <footer id="footer">
-        <div>
-            <h4>ScholarMatch</h4>
-            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
-        </div>
-        <div>
-            <h4>Quick Links</h4>
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="index.php#how-it-works">How It Works</a></li>
-                <li><a href="index.php#features">Features</a></li>
-                <li><a href="login.php">Login</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4>Contact</h4>
-            <p>Email: info@scholarmatch.com</p>
-            <p>Phone: (555) 123-4567</p>
-        </div>
-        <div>
-            <h4>Follow Us</h4>
-            <p>Facebook | Twitter | LinkedIn | Instagram</p>
-        </div>
-    </footer>
+    <?php include "includes/footer.php"; ?>
+
+    <script src="assets/js/validation.js?v=<?php echo time(); ?>"></script>
 
 </body>
 </html>
