@@ -10,7 +10,14 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
 $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if($id > 0) {
-    mysqli_query($conn, "UPDATE scholarships SET status = IF(status='active','inactive','active') WHERE scholarship_id=$id");
+    $ok = mysqli_query($conn, "UPDATE scholarships SET status = IF(status='active','inactive','active') WHERE scholarship_id=$id");
+    if($ok){
+        $_SESSION['flash_success'] = "Scholarship status updated successfully.";
+    } else {
+        $_SESSION['flash_error'] = "Failed to update scholarship status.";
+    }
+} else {
+    $_SESSION['flash_error'] = "Invalid scholarship selected.";
 }
 
 header("Location: manage_scholarships.php");

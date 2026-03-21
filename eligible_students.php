@@ -28,7 +28,8 @@ if(isset($_POST['check'])){
     while($r=mysqli_fetch_assoc($rules)){
         $field = trim($r['field_name']);
         $operator = trim($r['operator']);
-        $value = mysqli_real_escape_string($conn, $r['value']);
+        $raw_value = trim($r['value']);
+        $value = mysqli_real_escape_string($conn, $raw_value);
 
         // Skip rules whose field does not exist in current student_profile schema
         if(!isset($valid_fields[$field])){
@@ -40,13 +41,28 @@ if(isset($_POST['check'])){
             $operator = '=';
         }
 
+        // 'All' style values are non-restrictive
+        if(strcasecmp($raw_value, 'All') === 0 || strcasecmp($raw_value, 'All India') === 0){
+            continue;
+        }
+
+        // Comma-separated values with '=' should behave like IN (...)
+        if($operator === '=' && strpos($raw_value, ',') !== false){
+            $parts = array_filter(array_map('trim', explode(',', $raw_value)), function($v){ return $v !== ''; });
+            if(count($parts) > 0){
+                $escaped_parts = array_map(function($p) use ($conn){
+                    return "'" . mysqli_real_escape_string($conn, $p) . "'";
+                }, $parts);
+                $conditions[] = "sp.`$field` IN (" . implode(',', $escaped_parts) . ")";
+            }
+            continue;
+        }
+
         $conditions[] = "sp.`$field` $operator '$value'";
     }
 
-    // use full_name from profile when available, otherwise fallback to users table
-    $sql="SELECT COALESCE(NULLIF(sp.full_name, ''), u.name) AS student_name, sp.* 
-          FROM student_profile sp 
-          LEFT JOIN users u ON u.user_id=sp.user_id";
+    $sql="SELECT u.full_name, u.email, sp.* FROM student_profile sp 
+          JOIN users u ON u.user_id=sp.user_id";
 
     if($conditions){
         $sql.=" WHERE ".implode(" AND ",$conditions);
@@ -103,10 +119,40 @@ if(isset($_POST['check'])){
         <button name="check">Check</button>
         </form>
 
-        <?php if(isset($result)){ 
-        while($st=mysqli_fetch_assoc($result)){
-        echo "<p>{$st['name']} ({$st['marks']}%)</p>";
-        }} ?>
+        <?php if(!empty($query_error)): ?>
+            <p style="color:#c0392b;">Error loading eligible students: <?php echo htmlspecialchars($query_error); ?></p>
+        <?php endif; ?>
+
+        <?php if(isset($_POST['check']) && empty($query_error)): ?>
+            <?php if(count($eligible_students) > 0): ?>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Marks</th>
+                            <th>Category</th>
+                            <th>Education</th>
+                            <th>Income</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach($eligible_students as $st): ?>
+                            <tr>
+                                <td><?= htmlspecialchars($st['full_name'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($st['email'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($st['marks'] ?? '') ?>%</td>
+                                <td><?= htmlspecialchars($st['category'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($st['education_level'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($st['family_income'] ?? '') ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            <?php else: ?>
+                <div class="alert warning">No students are eligible for the selected scholarship.</div>
+            <?php endif; ?>
+        <?php endif; ?>
     </div>
 
     <!-- Footer -->

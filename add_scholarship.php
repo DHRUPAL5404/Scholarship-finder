@@ -7,15 +7,25 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     exit();
 }
 
-if(isset($_POST['add'])){
-    $title = $_POST['title'];
-    $desc = $_POST['description'];
-    $deadline = $_POST['deadline'];
+$flash_success = $_SESSION['flash_success'] ?? '';
+$flash_error = $_SESSION['flash_error'] ?? '';
+unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-    mysqli_query($conn,"INSERT INTO scholarships(title,description,deadline,status)
+if(isset($_POST['add'])){
+    $title = mysqli_real_escape_string($conn, $_POST['title']);
+    $desc = mysqli_real_escape_string($conn, $_POST['description']);
+    $deadline = mysqli_real_escape_string($conn, $_POST['deadline']);
+
+    $ok = mysqli_query($conn,"INSERT INTO scholarships(title,description,deadline,status)
     VALUES('$title','$desc','$deadline','active')");
-    
-    echo "Scholarship Added âœ…";
+
+    if($ok){
+        $_SESSION['flash_success'] = "Scholarship added successfully.";
+    } else {
+        $_SESSION['flash_error'] = "Failed to add scholarship: " . mysqli_error($conn);
+    }
+    header("Location: add_scholarship.php");
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -46,6 +56,12 @@ if(isset($_POST['add'])){
 
     <div class="container">
         <h2>Add New Scholarship</h2>
+        <?php if($flash_success): ?>
+            <div class="alert success"><?php echo htmlspecialchars($flash_success); ?></div>
+        <?php endif; ?>
+        <?php if($flash_error): ?>
+            <div class="alert danger"><?php echo htmlspecialchars($flash_error); ?></div>
+        <?php endif; ?>
         <form method="post">
             <input type="text" name="title" placeholder="Title" required><br><br>
             <textarea name="description" placeholder="Description" required></textarea><br><br>

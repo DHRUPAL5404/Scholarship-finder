@@ -7,7 +7,7 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role']!='admin'){
 }
 
 $res = @mysqli_query($conn,"
-SELECT a.*,u.name,s.title 
+SELECT a.*,u.full_name,s.title 
 FROM applications a
 JOIN users u ON a.student_id=u.user_id
 JOIN scholarships s ON s.scholarship_id=a.scholarship_id
@@ -50,7 +50,7 @@ JOIN scholarships s ON s.scholarship_id=a.scholarship_id
                 <tbody>
                     <?php while($a=mysqli_fetch_assoc($res)){ ?>
                     <tr>
-                        <td><?= htmlspecialchars($a['name']) ?></td>
+                        <td><?= htmlspecialchars($a['full_name']) ?></td>
                         <td><?= htmlspecialchars($a['title']) ?></td>
                         <td><?= htmlspecialchars($a['status']) ?></td>
                     </tr>

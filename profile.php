@@ -9,155 +9,100 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
 
 $user_id = $_SESSION['user_id'];
 
-function ensureStudentProfileSchema($conn) {
-    $required_columns = array(
-        'full_name' => 'VARCHAR(255) NULL',
-        'email' => 'VARCHAR(255) NULL',
-        'education_level' => 'VARCHAR(255) NULL',
-        'marks' => 'DECIMAL(5,2) NULL',
-        'family_income' => 'INT NULL',
-        'category' => 'VARCHAR(100) NULL',
-        'gender' => 'VARCHAR(50) NULL',
-        'state_id' => 'INT NULL',
-        'district_id' => 'INT NULL',
-        'institution_type' => 'VARCHAR(100) NULL',
-        'age' => 'INT NULL',
-        'disability_type' => "VARCHAR(100) DEFAULT 'None'",
-        'disability_percent' => 'INT DEFAULT 0',
-        'minority_status' => 'VARCHAR(10) NULL',
-        'parent_name' => 'VARCHAR(255) NULL',
-        'parent_occupation' => 'VARCHAR(255) NULL',
-        'parent_contact' => 'VARCHAR(20) NULL',
-        'course' => 'VARCHAR(255) NULL',
-        'current_year' => 'VARCHAR(50) NULL'
-    );
-
-    $errors = array();
-
-    foreach($required_columns as $column_name => $definition) {
-        $check_query = "SHOW COLUMNS FROM `student_profile` LIKE '$column_name'";
-        $check_result = mysqli_query($conn, $check_query);
-
-        if($check_result && mysqli_num_rows($check_result) === 0) {
-            $alter_query = "ALTER TABLE `student_profile` ADD COLUMN `$column_name` $definition";
-            if(!mysqli_query($conn, $alter_query)) {
-                $errors[] = "Could not add column `$column_name`: " . mysqli_error($conn);
-            }
-        }
-    }
-
-    return $errors;
-}
-
-$schema_errors = ensureStudentProfileSchema($conn);
-
 // Handle form submission
 $success_message = '';
-$error_message = empty($schema_errors) ? '' : implode('<br>', $schema_errors);
+$error_message   = '';
 
 if(isset($_POST['save_profile'])){
-    // Collect form data
-    $full_name = mysqli_real_escape_string($conn, $_POST['full_name']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-    $education_level = mysqli_real_escape_string($conn, $_POST['education_level']);
-    $marks = intval($_POST['marks']);
-    $family_income = intval($_POST['family_income']);
-    $category = mysqli_real_escape_string($conn, $_POST['category']);
-    $gender = mysqli_real_escape_string($conn, $_POST['gender']);
-    $state_id = intval($_POST['state_id']);
-    $district_id = intval($_POST['district_id']);
-    $institution_type = mysqli_real_escape_string($conn, $_POST['institution_type']);
-    $age = intval($_POST['age']);
-    $disability_type = mysqli_real_escape_string($conn, $_POST['disability_type'] ?? 'None');
+    $stmt = $conn->prepare("SELECT profile_id FROM student_profile WHERE user_id = ?");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $exists = $stmt->get_result()->num_rows > 0;
+    $stmt->close();
+
+    $full_name        = $_POST['full_name'];
+    $email            = $_POST['email'];
+    $education_level  = $_POST['education_level'];
+    $marks            = intval($_POST['marks']);
+    $family_income    = intval($_POST['family_income']);
+    $category         = $_POST['category'];
+    $gender           = $_POST['gender'];
+    $state_id         = intval($_POST['state_id']);
+    $district_id      = intval($_POST['district_id']);
+    $institution_type = $_POST['institution_type'];
+    $age              = intval($_POST['age']);
+    $disability_type  = $_POST['disability_type'] ?? 'None';
     $disability_percent = intval($_POST['disability_percent'] ?? 0);
-    $minority_status = mysqli_real_escape_string($conn, $_POST['minority_status']);
-    $parent_name = mysqli_real_escape_string($conn, $_POST['parent_name'] ?? '');
-    $parent_occupation = mysqli_real_escape_string($conn, $_POST['parent_occupation'] ?? '');
-    $parent_contact = mysqli_real_escape_string($conn, $_POST['parent_contact'] ?? '');
-    
-    // Handle optional fields
-    $below_10th_level = isset($_POST['below_10th_level']) ? mysqli_real_escape_string($conn, $_POST['below_10th_level']) : '';
-    $tenth_stream = isset($_POST['tenth_stream']) ? mysqli_real_escape_string($conn, $_POST['tenth_stream']) : '';
-    $diploma_course = isset($_POST['diploma_course']) ? mysqli_real_escape_string($conn, $_POST['diploma_course']) : '';
-    $undergrad_stream = isset($_POST['undergrad_stream']) ? mysqli_real_escape_string($conn, $_POST['undergrad_stream']) : '';
-    $science_group = isset($_POST['science_group']) ? mysqli_real_escape_string($conn, $_POST['science_group']) : '';
-    $undergrad_course = isset($_POST['undergrad_course']) ? mysqli_real_escape_string($conn, $_POST['undergrad_course']) : '';
-    $postgrad_course = isset($_POST['postgrad_course']) ? mysqli_real_escape_string($conn, $_POST['postgrad_course']) : '';
-    $phd_course = isset($_POST['phd_course']) ? mysqli_real_escape_string($conn, $_POST['phd_course']) : '';
-    $course = isset($_POST['course']) ? mysqli_real_escape_string($conn, $_POST['course']) : '';
-    $current_year = isset($_POST['current_year']) ? mysqli_real_escape_string($conn, $_POST['current_year']) : '';
-    
-    // Build the education_level string with all details
+    $minority_status  = $_POST['minority_status'];
+    $parent_name      = $_POST['parent_name'] ?? '';
+    $parent_occupation= $_POST['parent_occupation'] ?? '';
+    $parent_contact   = $_POST['parent_contact'] ?? '';
+    $course           = $_POST['course'] ?? '';
+    $current_year     = $_POST['current_year'] ?? '';
+
+    // Build education_final string
     $education_final = $education_level;
-    if($education_level === 'Below 10th' && $below_10th_level) {
-        $education_final = $below_10th_level;
-    } elseif($education_level === '10th Pass(SSC)' && $tenth_stream) {
-        $education_final = $tenth_stream;
-    } elseif($education_level === 'Undergraduate' && ($science_group || $undergrad_course)) {
-        $education_final = 'Undergraduate - ' . ($science_group ?: $undergrad_course);
-    } elseif($education_level === 'Postgraduate' && $postgrad_course) {
-        $education_final = $postgrad_course;
-    } elseif($education_level === 'PhD' && $phd_course) {
-        $education_final = $phd_course;
-    }
-    
-    // Check if profile exists
-    $check_query = "SELECT profile_id FROM student_profile WHERE user_id = $user_id";
-    $check_result = mysqli_query($conn, $check_query);
-    
-    if(mysqli_num_rows($check_result) > 0) {
-        // Update existing profile
-        $update_query = "UPDATE student_profile SET
-            full_name = '$full_name',
-            email = '$email',
-            education_level = '$education_final',
-            marks = $marks,
-            family_income = $family_income,
-            category = '$category',
-            gender = '$gender',
-            state_id = $state_id,
-            district_id = $district_id,
-            institution_type = '$institution_type',
-            age = $age,
-            disability_type = '$disability_type',
-            disability_percent = $disability_percent,
-            minority_status = '$minority_status',
-            parent_name = '$parent_name',
-            parent_occupation = '$parent_occupation',
-            parent_contact = '$parent_contact',
-            course = '$course',
-            current_year = '$current_year'
-            WHERE user_id = $user_id";
-        
-        if(mysqli_query($conn, $update_query)){
-            $_SESSION['profile_success'] = "Profile updated successfully!";
-            header("Location: student_dashboard.php");
-            exit();
+    if($education_level === 'Below 10th' && !empty($_POST['below_10th_level'])) {
+        $education_final = $_POST['below_10th_level'];
+    } elseif($education_level === '10th Pass(SSC)' && !empty($_POST['tenth_stream'])) {
+        $tenth_stream = $_POST['tenth_stream'];
+        if($tenth_stream === 'Diploma' && !empty($_POST['diploma_course'])) {
+            $education_final = '10th Pass - Diploma - ' . $_POST['diploma_course'];
         } else {
-            $error_message = "Error updating profile: " . mysqli_error($conn);
+            $education_final = '10th Pass - ' . $tenth_stream;
         }
+    } elseif($education_level === 'Undergraduate') {
+        $ustream = $_POST['undergrad_stream'] ?? '';
+        $sgroup  = $_POST['science_group'] ?? '';
+        $ucourse = $_POST['undergrad_course'] ?? '';
+        if($ustream === 'Science' && $sgroup && $ucourse) {
+            $education_final = "Undergraduate - Science - $sgroup - $ucourse";
+        } elseif($ustream && $ucourse) {
+            $education_final = "Undergraduate - $ustream - $ucourse";
+        } elseif($ustream) {
+            $education_final = "Undergraduate - $ustream";
+        }
+    } elseif($education_level === 'Postgraduate' && !empty($_POST['postgrad_course'])) {
+        $education_final = $_POST['postgrad_course'];
+    } elseif($education_level === 'PhD' && !empty($_POST['phd_course'])) {
+        $education_final = $_POST['phd_course'];
+    }
+
+    if($exists) {
+        $stmt = $conn->prepare("UPDATE student_profile SET
+            full_name=?, email=?, education_level=?, marks=?, family_income=?,
+            category=?, gender=?, state_id=?, district_id=?, institution_type=?,
+            age=?, disability_type=?, disability_percent=?, minority_status=?,
+            parent_name=?, parent_occupation=?, parent_contact=?, course=?, current_year=?
+            WHERE user_id=?");
+        $stmt->bind_param("sssiissiisisssssssssi",
+            $full_name, $email, $education_final, $marks, $family_income,
+            $category, $gender, $state_id, $district_id, $institution_type,
+            $age, $disability_type, $disability_percent, $minority_status,
+            $parent_name, $parent_occupation, $parent_contact, $course, $current_year,
+            $user_id);
     } else {
-        // Insert new profile
-        $insert_query = "INSERT INTO student_profile (
-            user_id, full_name, email, education_level, marks, family_income, category, 
-            gender, state_id, district_id, institution_type, age, disability_type, 
-            disability_percent, minority_status, parent_name, parent_occupation, 
-            parent_contact, course, current_year
-        ) VALUES (
-            $user_id, '$full_name', '$email', '$education_final', $marks, $family_income, 
-            '$category', '$gender', $state_id, $district_id, '$institution_type', $age, 
-            '$disability_type', $disability_percent, '$minority_status', '$parent_name', 
-            '$parent_occupation', '$parent_contact', '$course', '$current_year'
-        )";
-        
-        if(mysqli_query($conn, $insert_query)){
-            $_SESSION['profile_success'] = "Profile saved successfully!";
-            header("Location: student_dashboard.php");
-            exit();
-        } else {
-            $error_message = "Error saving profile: " . mysqli_error($conn);
-        }
+        $stmt = $conn->prepare("INSERT INTO student_profile
+            (user_id, full_name, email, education_level, marks, family_income,
+             category, gender, state_id, district_id, institution_type, age,
+             disability_type, disability_percent, minority_status,
+             parent_name, parent_occupation, parent_contact, course, current_year)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $stmt->bind_param("isssiissiisissssssss",
+            $user_id, $full_name, $email, $education_final, $marks, $family_income,
+            $category, $gender, $state_id, $district_id, $institution_type, $age,
+            $disability_type, $disability_percent, $minority_status,
+            $parent_name, $parent_occupation, $parent_contact, $course, $current_year);
     }
+
+    if($stmt->execute()){
+        $_SESSION['profile_success'] = $exists ? "Profile updated successfully!" : "Profile saved successfully!";
+        header("Location: student_dashboard.php");
+        exit();
+    } else {
+        $error_message = "Error: " . $stmt->error;
+    }
+    $stmt->close();
 }
 
 // Fetch student profile
@@ -248,33 +193,26 @@ $profile = mysqli_fetch_assoc(
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Profile - ScholarMatch</title>
+    <title><?= $is_edit ? 'Edit' : 'Create' ?> Profile - ScholarMatch</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="index.php#how-it-works">How It Works</a></li>
-            <li><a href="index.php#features">Features</a></li>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <li><a href="student_dashboard.php">Dashboard</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            <?php else: ?>
-                <li><a href="login.php">Login</a></li>
-                <li><a href="register.php">Register</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
+<nav>
+    <ul>
+        <li><a href="index.php">Home</a></li>
+        <?php if(isset($_SESSION['user_id'])): ?>
+            <li><a href="student_dashboard.php">Dashboard</a></li>
+            <li><a href="logout.php">Logout</a></li>
+        <?php else: ?>
+            <li><a href="login.php">Login</a></li>
+            <li><a href="register.php">Register</a></li>
+        <?php endif; ?>
+    </ul>
+</nav>
 
     <div class="container profile-page">
         <h2>Update Your Profile</h2>
-        <?php if(isset($message)): ?>
-            <?php $color = strpos($message,'❌') === 0 ? 'red' : 'green'; ?>
-            <p style="color: <?= $color ?>; font-weight:bold;"><?= $message ?></p>
-        <?php endif; ?>
         
         <?php if($success_message): ?>
             <div style="color: green; background-color: #d4edda; padding: 10px; margin-bottom: 20px; border-radius: 5px;">
@@ -507,10 +445,6 @@ function toggleOtherField(dropdownId, otherFieldId) {
 }
 
 // Cascade dropdowns for State, District
-// prepare preselect values from PHP
-var preselectState = "<?= $profile['state_id'] ?? '' ?>";
-var preselectDistrict = "<?= $profile['district_id'] ?? '' ?>";
-
 document.addEventListener('DOMContentLoaded', function() {
     const stateSelect = document.getElementById('state');
     const districtSelect = document.getElementById('district');
@@ -520,11 +454,6 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(res => res.text())
         .then(data => {
             stateSelect.innerHTML += data;
-            if(preselectState) {
-                stateSelect.value = preselectState;
-                // trigger change to populate districts
-                stateSelect.dispatchEvent(new Event('change'));
-            }
         });
     
     // Load districts when state changes
@@ -534,11 +463,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(res => res.text())
                 .then(data => {
                     districtSelect.innerHTML = '<option value="">Select District</option>' + data;
-                    districtSelect.disabled = false;
-                    if(preselectDistrict) {
-                        districtSelect.value = preselectDistrict;
-                    }
-
                 });
         } else {
             districtSelect.innerHTML = '<option value="">Select District</option>';
@@ -800,34 +724,154 @@ document.addEventListener('DOMContentLoaded', function() {
     
     <button type="submit" name="save_profile">Save Profile</button>
 </form>
-
     </div>
 
-    <!-- Footer -->
-    <footer id="footer">
-        <div>
-            <h4>ScholarMatch</h4>
-            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
-        </div>
-        <div>
-            <h4>Quick Links</h4>
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="index.php#how-it-works">How It Works</a></li>
-                <li><a href="index.php#features">Features</a></li>
-                <li><a href="login.php">Login</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4>Contact</h4>
-            <p>Email: info@scholarmatch.com</p>
-            <p>Phone: (555) 123-4567</p>
-        </div>
-        <div>
-            <h4>Follow Us</h4>
-            <p>Facebook | Twitter | LinkedIn | Instagram</p>
-        </div>
-    </footer>
+<footer id="footer">
+    <div>
+        <h4>ScholarMatch</h4>
+        <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
+    </div>
+    <div>
+        <h4>Quick Links</h4>
+        <ul>
+            <li><a href="index.php">Home</a></li>
+            <li><a href="student_dashboard.php">Dashboard</a></li>
+            <li><a href="login.php">Login</a></li>
+        </ul>
+    </div>
+    <div>
+        <h4>Contact</h4>
+        <p>Email: info@scholarmatch.com</p>
+    </div>
+</footer>
+
+<script>
+// Saved values from PHP for auto-selecting state/district
+const SAVED_STATE_ID    = <?= intval($saved_state_id) ?>;
+const SAVED_DISTRICT_ID = <?= intval($saved_district_id) ?>;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ── State dropdown: load all states, then auto-select saved one ──
+    fetch('get_states.php')
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('state').innerHTML += html;
+            if(SAVED_STATE_ID > 0) {
+                document.getElementById('state').value = SAVED_STATE_ID;
+                // After selecting state, load its districts then auto-select saved district
+                loadDistricts(SAVED_STATE_ID, SAVED_DISTRICT_ID);
+            }
+        });
+
+    // ── State change by user ──
+    document.getElementById('state').addEventListener('change', function() {
+        loadDistricts(this.value, 0);
+    });
+
+    // ── Trigger education dropdowns on load ──
+    toggleBelow10thDropdown();
+});
+
+function loadDistricts(stateId, autoSelectDistrictId) {
+    if(!stateId) {
+        document.getElementById('district').innerHTML = '<option value="">Select District</option>';
+        return;
+    }
+    fetch('get_districts.php?state_id=' + stateId)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('district').innerHTML =
+                '<option value="">Select District</option>' + html;
+            // Auto-select the saved district if provided
+            if(autoSelectDistrictId > 0) {
+                document.getElementById('district').value = autoSelectDistrictId;
+            }
+        });
+}
+
+function toggleBelow10thDropdown() {
+    const edu = document.getElementById('education_level').value;
+    const divs = {
+        'below_10th':    ['Below 10th'],
+        'tenth_stream':  ['10th Pass(SSC)'],
+        'undergrad_stream': ['Undergraduate'],
+        'postgrad_course':  ['Postgraduate'],
+        'phd_course':       ['PhD'],
+        'course_year':      ['Other']
+    };
+
+    hide('below_10th_dropdown');
+    hide('tenth_stream_dropdown');
+    hide('undergrad_stream_dropdown');
+    hide('postgrad_course_dropdown');
+    hide('phd_course_dropdown');
+    hide('course_year_fields');
+
+    if(edu === 'Below 10th')      show('below_10th_dropdown');
+    else if(edu === '10th Pass(SSC)') { show('tenth_stream_dropdown'); toggleDiplomaDropdown(); }
+    else if(edu === 'Undergraduate')  { show('undergrad_stream_dropdown'); toggleScienceGroupDropdown(); }
+    else if(edu === 'Postgraduate')   show('postgrad_course_dropdown');
+    else if(edu === 'PhD')            show('phd_course_dropdown');
+    else if(edu === 'Other')          show('course_year_fields');
+}
+
+function toggleDiplomaDropdown() {
+    const val = document.getElementById('tenth_stream').value;
+    val === 'Diploma' ? show('diploma_course_dropdown') : hide('diploma_course_dropdown');
+}
+
+function toggleScienceGroupDropdown() {
+    const stream = document.getElementById('undergrad_stream').value;
+    hide('science_group_dropdown');
+    hide('undergrad_course_dropdown');
+
+    if(stream === 'Science') {
+        show('science_group_dropdown');
+        toggleTwelfthCourseDropdown();
+    } else if(stream === 'Commerce' || stream === 'Arts') {
+        show('undergrad_course_dropdown');
+        updateCoursesForStream(stream);
+    }
+}
+
+function toggleTwelfthCourseDropdown() {
+    const stream = document.getElementById('undergrad_stream').value;
+    const group  = document.getElementById('science_group').value;
+    if(stream === 'Science' && group) {
+        show('undergrad_course_dropdown');
+        updateCoursesForScienceGroup(group);
+    }
+}
+
+function updateCoursesForScienceGroup(group) {
+    const map = {
+        'Group A': ['B.E. / B.Tech (Engineering)','BCA (Computer Applications)','B.Sc (Science)'],
+        'Group B': ['MBBS / BDS / BAMS / BHMS (Medical)','B.Sc Nursing','B.Pharm (Pharmacy)','B.Sc (Science)']
+    };
+    fillCourseSelect('undergrad_course', map[group] || []);
+}
+
+function updateCoursesForStream(stream) {
+    const map = {
+        'Commerce': ['B.Com (Commerce)','BBA (Business Administration)','Hotel Management / Tourism','B.Ed (Integrated)'],
+        'Arts':     ['B.A (Arts / Humanities)','Fashion Designing / Fine Arts','LLB (Law - 5 Year)','Hotel Management / Tourism','B.Ed (Integrated)']
+    };
+    fillCourseSelect('undergrad_course', map[stream] || []);
+}
+
+function fillCourseSelect(id, courses) {
+    // Preserve previously saved value if it exists
+    const saved = document.getElementById(id).dataset.saved || '';
+    let html = '<option value="">Select Course</option>';
+    courses.forEach(c => {
+        html += `<option value="${c}" ${c === saved ? 'selected' : ''}>${c}</option>`;
+    });
+    document.getElementById(id).innerHTML = html;
+}
+
+function show(id) { const el = document.getElementById(id); if(el) el.style.display = 'block'; }
+function hide(id) { const el = document.getElementById(id); if(el) el.style.display = 'none'; }
+</script>
 
 </body>
 </html>
