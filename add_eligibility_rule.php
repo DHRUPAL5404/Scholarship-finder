@@ -13,20 +13,23 @@ $sch = mysqli_query($conn,"SELECT * FROM scholarships");
 $existing_rules = [];
 $selected_sch_id = isset($_GET['scholarship']) ? intval($_GET['scholarship']) : 0;
 if($selected_sch_id) {
-    $res = mysqli_query($conn, "SELECT * FROM eligibility_rules WHERE scholarship_id=$selected_sch_id");
+    $stmt = mysqli_prepare($conn, "SELECT * FROM eligibility_rules WHERE scholarship_id=?");
+    mysqli_stmt_bind_param($stmt, "i", $selected_sch_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
     while($r = mysqli_fetch_assoc($res)){
         $existing_rules[] = $r;
     }
 }
 
 if(isset($_POST['add'])){
-    $scholarship_id = mysqli_real_escape_string($conn, $_POST['scholarship']);
-    $field_name = mysqli_real_escape_string($conn, $_POST['field']);
-    $operator = mysqli_real_escape_string($conn, $_POST['operator'] ?? '=');
+    $scholarship_id = intval($_POST['scholarship']);
+    $field_name = $_POST['field'];
+    $operator = $_POST['operator'] ?? '=';
     if(!in_array($operator, array('=', '>=', '<=', '>', '<'), true)){
         $operator = '=';
     }
-    $value = mysqli_real_escape_string($conn, $_POST['value']);
+    $value = $_POST['value'];
     
     // Separate handling for education_level and courses
     if($field_name === 'education_level' && isset($_POST['is_course']) && $_POST['is_course'] == '1'){
@@ -34,13 +37,17 @@ if(isset($_POST['add'])){
     }
 
     // fetch scholarship title for convenience
-    $title_row = mysqli_fetch_assoc(mysqli_query($conn, "SELECT title FROM scholarships WHERE scholarship_id=$scholarship_id"));
-    $scholarship_title = $title_row ? mysqli_real_escape_string($conn, $title_row['title']) : '';
+    $stmt_title = mysqli_prepare($conn, "SELECT title FROM scholarships WHERE scholarship_id=?");
+    mysqli_stmt_bind_param($stmt_title, "i", $scholarship_id);
+    mysqli_stmt_execute($stmt_title);
+    $res_title = mysqli_stmt_get_result($stmt_title);
+    $title_row = mysqli_fetch_assoc($res_title);
+    $scholarship_title = $title_row ? $title_row['title'] : '';
     
-    mysqli_query($conn,"INSERT INTO eligibility_rules
-    (scholarship_id,scholarship_title,field_name,operator,value)
-    VALUES
-    ('$scholarship_id','$field_name','$operator','$value')");
+    $stmt_insert = mysqli_prepare($conn, "INSERT INTO eligibility_rules (scholarship_id, scholarship_title, field_name, operator, value) VALUES (?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt_insert, "issss", $scholarship_id, $scholarship_title, $field_name, $operator, $value);
+    mysqli_stmt_execute($stmt_insert);
+    
     echo "✅ Rule Added Successfully!";
 }
 ?>

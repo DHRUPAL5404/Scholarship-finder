@@ -89,6 +89,17 @@ $applications_table = "CREATE TABLE IF NOT EXISTS scholarship_applications (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 )";
 
+// Create eligibility_rules table
+$eligibility_rules_table = "CREATE TABLE IF NOT EXISTS eligibility_rules (
+    rule_id INT PRIMARY KEY AUTO_INCREMENT,
+    scholarship_id INT NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    operator VARCHAR(10) DEFAULT '=',
+    value VARCHAR(255) NOT NULL,
+    scholarship_title VARCHAR(255),
+    FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id) ON DELETE CASCADE
+)";
+
 $results = array();
 
 // Execute users table creation
@@ -131,6 +142,13 @@ if(mysqli_query($conn, $applications_table)) {
     $results[] = "✓ Scholarship applications table created/verified";
 } else {
     $results[] = "✗ Error creating applications table: " . mysqli_error($conn);
+}
+
+// Execute eligibility rules table creation
+if(mysqli_query($conn, $eligibility_rules_table)) {
+    $results[] = "✓ Eligibility rules table created/verified";
+} else {
+    $results[] = "✗ Error creating eligibility rules table: " . mysqli_error($conn);
 }
 
 // Check scholarships table structure and add missing columns
