@@ -40,13 +40,9 @@ if(isset($_POST['add'])){
     mysqli_query($conn,"INSERT INTO eligibility_rules
     (scholarship_id,scholarship_title,field_name,operator,value)
     VALUES
-    ('$scholarship_id','$scholarship_title','$field_name','$operator','$value')");
-    echo "✅ Rule Added Successfully!";
-    // reload page so that existing rules list updates
-    header("Location: add_eligibility_rule.php?scholarship=$scholarship_id");
-    exit();
+    ('$scholarship_id','$field_name','$operator','$value')");
+    echo "âœ… Rule Added Successfully!";
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
