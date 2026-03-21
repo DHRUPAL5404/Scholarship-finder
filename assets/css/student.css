@@ -1,0 +1,262 @@
+/* Student Pages Styles - Dashboard, Profile, Scholarship pages */
+
+/* ===== SCHOLARSHIP CARDS ===== */
+.scholarships-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.scholarship-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 1px solid #e9ecef;
+    display: flex;
+    flex-direction: column;
+}
+
+.scholarship-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    padding: 1.5rem;
+}
+
+.card-header h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.card-footer {
+    padding: 1.5rem;
+    background: var(--light-gray);
+    border-top: 1px solid var(--medium-gray);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+}
+
+/* Eligibility Badges */
+.eligibility-status {
+    margin: 1rem 0;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.status-badge.eligible {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--success-color);
+}
+
+.status-badge.partial {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--warning-color);
+}
+
+.status-badge.not_eligible {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+}
+
+/* Deadline Badge */
+.deadline-badge {
+    margin: 1rem 0;
+    padding: 0.5rem;
+    background: var(--light-gray);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.deadline-badge.urgent {
+    background: rgba(231, 76, 60, 0.1);
+    color: var(--danger-color);
+}
+
+/* Issues List */
+.issues-list {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(231, 76, 60, 0.05);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.issues-list ul {
+    margin-top: 0.5rem;
+    padding-left: 1.5rem;
+}
+
+.issues-list li {
+    color: var(--danger-color);
+}
+
+/* Button Styles */
+.btn-details, .btn-apply {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-details {
+    background: var(--medium-gray);
+    color: var(--text-color);
+}
+
+.btn-apply {
+    background: linear-gradient(135deg, var(--success-color), #27ae60);
+    color: white;
+}
+
+.btn-details:hover {
+    background: var(--dark-gray);
+    color: white;
+}
+
+.btn-apply:hover {
+    background: linear-gradient(135deg, #27ae60, var(--success-color));
+    transform: translateY(-2px);
+}
+
+/* ===== DASHBOARD HEADER ===== */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.header-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.header-actions a {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.header-actions a:first-child {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.header-actions a.logout {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* ===== NO DATA MESSAGES ===== */
+.no-scholarships {
+    text-align: center;
+    padding: 3rem;
+    background: white;
+    border-radius: 8px;
+    color: var(--dark-gray);
+    font-size: 1.1rem;
+}
+
+/* ===== PAGINATION ===== */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+
+.pagination a,
+.pagination span {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    background: white;
+    color: var(--text-color);
+    border: 1px solid var(--medium-gray);
+}
+
+.pagination a:hover {
+    background: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+.pagination span.active {
+    background: var(--secondary-color);
+    color: white;
+    border-color: var(--secondary-color);
+}
+
+/* ===== PROFILE FORM ===== */
+.profile-page {
+    max-width: 980px;
+}
+
+.profile-form {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    padding: 1.75rem 2rem;
+}
+
+.profile-form br {
+    display: none;
+}
+
+.profile-form input[type="text"],
+.profile-form input[type="email"],
+.profile-form input[type="number"],
+.profile-form input[type="tel"],
+.profile-form select {
+    display: block;
+    margin-top: 0.45rem;
+    margin-bottom: 1rem;
+}
+
+.profile-form #below_10th_dropdown,
+.profile-form #tenth_stream_dropdown,
+.profile-form #undergrad_stream_dropdown,
+.profile-form #postgrad_course_dropdown,
+.profile-form #phd_course_dropdown,
+.profile-form #course_year_fields,
+.profile-form #diploma_course_dropdown,
+.profile-form #science_group_dropdown,
+.profile-form #undergrad_course_dropdown {
+    border: 1px solid #e2e8f0;
+    background: #f8fbff;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.profile-form button[type="submit"] {
+    margin-top: 0.5rem;
+}

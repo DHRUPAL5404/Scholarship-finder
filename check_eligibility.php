@@ -23,7 +23,9 @@ if(!$student){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check Eligibility - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/student.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/validation.css?v=<?php echo time(); ?>">
 </head>
 <body>
 

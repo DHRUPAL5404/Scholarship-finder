@@ -1,0 +1,459 @@
+/* Admin Pages Styles - Dashboard, Scholarships Management, Eligibility Rules, etc */
+
+/* ===== ADMIN HOME ===== */
+.admin-home {
+    max-width: 900px;
+}
+
+.admin-links {
+    list-style: none;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 0.75rem;
+}
+
+.admin-links li {
+    border-bottom: 1px solid var(--medium-gray);
+}
+
+.admin-links li:last-child {
+    border-bottom: 0;
+}
+
+.admin-links a {
+    display: block;
+    text-decoration: none;
+    color: var(--text-color);
+    font-weight: 600;
+    padding: 0.9rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.admin-links a:hover {
+    background: #eef6ff;
+    color: #1f4f77;
+}
+
+/* ===== SIMPLE CARDS ===== */
+.manage-scholarship-card,
+.eligible-card {
+    background: white;
+    border: 1px solid var(--medium-gray);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 1rem 1.1rem;
+    margin: 0.85rem 0;
+}
+
+.manage-scholarship-card a {
+    display: inline-block;
+    margin-top: 0.55rem;
+}
+
+.status-chip {
+    display: inline-block;
+    padding: 0.18rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    text-transform: capitalize;
+    border: 1px solid transparent;
+}
+
+.status-chip.success {
+    color: #14532d;
+    background: #dcfce7;
+    border-color: #86efac;
+}
+
+.status-chip.muted {
+    color: #475569;
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+
+/* ===== TABLES ===== */
+table {
+    width: 100%;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin: 1rem 0;
+}
+
+thead {
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--medium-gray);
+}
+
+tr:hover {
+    background: var(--light-gray);
+}
+
+/* ===== DB STATUS / SETUP ===== */
+.status-item {
+    background: white;
+    border: 1px solid var(--medium-gray);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 0.85rem 1rem;
+    margin: 0.75rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.status-item.pass {
+    border-left: 4px solid #16a34a;
+}
+
+.status-item.fail {
+    border-left: 4px solid #dc2626;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.badge.pass {
+    color: #14532d;
+    background: #dcfce7;
+}
+
+.badge.fail {
+    color: #7f1d1d;
+    background: #fee2e2;
+}
+
+.summary {
+    margin-top: 1rem;
+    padding: 0.95rem 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    font-weight: 600;
+}
+
+.summary.ready {
+    color: #14532d;
+    background: #dcfce7;
+    border-color: #86efac;
+}
+
+.summary.not-ready {
+    color: #7c2d12;
+    background: #ffedd5;
+    border-color: #fdba74;
+}
+
+.action-buttons,
+.button-group {
+    margin-top: 1rem;
+    display: flex;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-success,
+.btn-secondary {
+    display: inline-block;
+    text-decoration: none;
+    color: white;
+    border-radius: 8px;
+    padding: 0.65rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: #2563eb;
+}
+
+.btn-success {
+    background: #16a34a;
+}
+
+.btn-secondary {
+    background: #475569;
+}
+
+.btn-primary:hover,
+.btn-success:hover,
+.btn-secondary:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.95);
+}
+
+.results {
+    list-style: none;
+    padding: 0;
+}
+
+.results li {
+    background: white;
+    border-left: 4px solid var(--secondary-color);
+    border-radius: 6px;
+    margin: 0.65rem 0;
+    padding: 0.7rem 0.85rem;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.results li.success {
+    border-left-color: #16a34a;
+    background: #f0fdf4;
+    color: #14532d;
+}
+
+.results li.warning {
+    border-left-color: #f59e0b;
+    background: #fffbeb;
+    color: #78350f;
+}
+
+.results li.error {
+    border-left-color: #dc2626;
+    background: #fef2f2;
+    color: #7f1d1d;
+}
+
+.results li.info {
+    border-left-color: #2563eb;
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+
+/* ===== RULE BUILDER ===== */
+.rules-page {
+    max-width: 1180px;
+}
+
+.rules-page h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+
+.rule-section {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.rule-section h3 {
+    margin-bottom: 1rem;
+}
+
+.rule-section form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 0.75rem;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+.rule-section form input,
+.rule-section form select {
+    margin-bottom: 0;
+}
+
+.rule-section form button {
+    margin-bottom: 0;
+}
+
+.rule-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.rule-item {
+    background: #f8fbff;
+    border: 1px solid #cbd5e1;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rule-item .rule-text {
+    font-weight: 500;
+}
+
+.rule-item button {
+    background: #dc2626;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.875rem;
+}
+
+.rule-item button:hover {
+    background: #b91c1c;
+}
+
+.rules-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--dark-gray);
+    font-style: italic;
+}
+
+/* Home Page Styles - Hero & Sections */
+.home-page {
+    background: var(--light-gray);
+}
+
+section {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+/* Hero Section */
+#hero {
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary-color), #34495e);
+    color: white;
+    padding: 4rem 2rem;
+}
+
+#hero h1 {
+    color: white;
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+#hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+#hero a {
+    background: white;
+    color: var(--primary-color);
+    padding: 1rem 2rem;
+    margin: 0 0.5rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+#hero a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
+
+/* Features Grid */
+#features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    background: transparent;
+    box-shadow: none;
+}
+
+#features div {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+#features div:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+#features h3 {
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+}
+
+/* How It Works */
+#how-it-works {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    background: transparent;
+    box-shadow: none;
+}
+
+#how-it-works div {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    position: relative;
+    text-align: center;
+}
+
+#how-it-works div::before {
+    content: counter(step);
+    counter-increment: step;
+    position: absolute;
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--secondary-color);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+#how-it-works {
+    counter-reset: step;
+}
+
+/* CTA Section */
+#cta {
+    text-align: center;
+    background: linear-gradient(135deg, var(--success-color), #27ae60);
+    color: white;
+}
+
+#cta h2 {
+    color: white;
+}
+
+#cta a {
+    background: white;
+    color: var(--success-color);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    display: inline-block;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+}
+
+#cta a:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+}
