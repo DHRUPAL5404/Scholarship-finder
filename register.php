@@ -47,34 +47,50 @@ if(isset($_POST['register'])){
             if($result && $result->num_rows > 0){
                 $register_error = "Email already registered!";
             } else {
-                // Use prepared statement for user registration
-                $stmt = $conn->prepare("INSERT INTO users (full_name, email, mobile, password, role) VALUES (?, ?, ?, ?, ?)");
-                if (!$stmt) {
+                // Check if mobile number already exists
+                $mobile_check_stmt = $conn->prepare("SELECT user_id FROM users WHERE mobile = ?");
+                if (!$mobile_check_stmt) {
                     $register_error = "Database error: " . $conn->error;
                 } else {
-                    $role = 'student';
-                    $stmt->bind_param("sssss", $name, $email, $mobile, $password, $role);
+                    $mobile_check_stmt->bind_param("s", $mobile);
+                    $mobile_check_stmt->execute();
+                    $mobile_result = $mobile_check_stmt->get_result();
 
-                    if($stmt->execute()){
-                        $user_id = $stmt->insert_id;
-                        $stmt->close();
-
-                        // Use prepared statement for profile creation
-                        $profile_stmt = $conn->prepare("INSERT INTO student_profile (user_id, full_name) VALUES (?, ?)");
-                        if ($profile_stmt) {
-                            $profile_stmt->bind_param("is", $user_id, $name);
-                            if($profile_stmt->execute()){
-                                $_SESSION['flash_success'] = "Registration successful. Please login.";
-                            } else {
-                                $_SESSION['flash_success'] = "Registration successful. Please login to complete profile.";
-                            }
-                            $profile_stmt->close();
-                        }
-                        header("Location: login.php");
-                        exit();
+                    if($mobile_result && $mobile_result->num_rows > 0){
+                        $register_error = "Mobile number already registered!";
+                        $mobile_check_stmt->close();
                     } else {
-                        $register_error = "Error: " . $stmt->error;
-                        $stmt->close();
+                        $mobile_check_stmt->close();
+                        // Use prepared statement for user registration
+                        $stmt = $conn->prepare("INSERT INTO users (full_name, email, mobile, password, role) VALUES (?, ?, ?, ?, ?)");
+                        if (!$stmt) {
+                            $register_error = "Database error: " . $conn->error;
+                        } else {
+                            $role = 'student';
+                            $stmt->bind_param("sssss", $name, $email, $mobile, $password, $role);
+
+                            if($stmt->execute()){
+                                $user_id = $stmt->insert_id;
+                                $stmt->close();
+
+                                // Use prepared statement for profile creation
+                                $profile_stmt = $conn->prepare("INSERT INTO student_profile (user_id, full_name) VALUES (?, ?)");
+                                if ($profile_stmt) {
+                                    $profile_stmt->bind_param("is", $user_id, $name);
+                                    if($profile_stmt->execute()){
+                                        $_SESSION['flash_success'] = "Registration successful. Please login.";
+                                    } else {
+                                        $_SESSION['flash_success'] = "Registration successful. Please login to complete profile.";
+                                    }
+                                    $profile_stmt->close();
+                                }
+                                header("Location: login.php");
+                                exit();
+                            } else {
+                                $register_error = "Error: " . $stmt->error;
+                                $stmt->close();
+                            }
+                        }
                     }
                 }
             }

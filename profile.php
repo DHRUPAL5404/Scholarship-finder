@@ -11,7 +11,7 @@ $user_id = $_SESSION['user_id'];
 
 // Handle form submission
 $success_message = '';
-$error_message   = '';
+$error_message = '';
 
 if(isset($_POST['save_profile'])){
     $stmt = $conn->prepare("SELECT profile_id FROM student_profile WHERE user_id = ?");
@@ -21,7 +21,7 @@ if(isset($_POST['save_profile'])){
     $stmt->close();
 
     $full_name        = $_POST['full_name'];
-    $email            = $_POST['email'];
+    $email            = trim($_POST['email'] ?? '');
     $education_level  = $_POST['education_level'];
     $marks            = intval($_POST['marks']);
     $family_income    = intval($_POST['family_income']);
@@ -39,6 +39,22 @@ if(isset($_POST['save_profile'])){
     $parent_contact   = $_POST['parent_contact'] ?? '';
     $course           = $_POST['course'] ?? '';
     $current_year     = $_POST['current_year'] ?? '';
+
+    // Keep course column populated from selected course dropdowns too
+    $course_final = trim($course);
+    if($course_final === '') {
+        if(!empty($_POST['undergrad_course'])) {
+            $course_final = trim($_POST['undergrad_course']);
+        } elseif(!empty($_POST['postgrad_course'])) {
+            $course_final = trim($_POST['postgrad_course']);
+        } elseif(!empty($_POST['phd_course'])) {
+            $course_final = trim($_POST['phd_course']);
+        } elseif(!empty($_POST['diploma_course'])) {
+            $course_final = trim($_POST['diploma_course']);
+        } elseif(!empty($_POST['tenth_stream'])) {
+            $course_final = trim($_POST['tenth_stream']);
+        }
+    }
 
     // Build education_final string
     $education_final = $education_level;
@@ -75,11 +91,11 @@ if(isset($_POST['save_profile'])){
             age=?, disability_type=?, disability_percent=?, minority_status=?,
             parent_name=?, parent_occupation=?, parent_contact=?, course=?, current_year=?
             WHERE user_id=?");
-        $stmt->bind_param("sssiissiisisssssssssi",
+        $stmt->bind_param("sssiissiisisissssssi",
             $full_name, $email, $education_final, $marks, $family_income,
             $category, $gender, $state_id, $district_id, $institution_type,
             $age, $disability_type, $disability_percent, $minority_status,
-            $parent_name, $parent_occupation, $parent_contact, $course, $current_year,
+            $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year,
             $user_id);
     } else {
         $stmt = $conn->prepare("INSERT INTO student_profile
@@ -88,22 +104,24 @@ if(isset($_POST['save_profile'])){
              disability_type, disability_percent, minority_status,
              parent_name, parent_occupation, parent_contact, course, current_year)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("isssiissiisissssssss",
+        $stmt->bind_param("isssiissiisisisssssss",
             $user_id, $full_name, $email, $education_final, $marks, $family_income,
             $category, $gender, $state_id, $district_id, $institution_type, $age,
             $disability_type, $disability_percent, $minority_status,
-            $parent_name, $parent_occupation, $parent_contact, $course, $current_year);
+            $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year);
     }
 
-    if($stmt->execute()){
-        $_SESSION['profile_success'] = $exists ? "Profile updated successfully!" : "Profile saved successfully!";
+    if($stmt->execute()) {
+        error_log("Profile saved successfully for user_id: $user_id"); // Log success
         header("Location: student_dashboard.php");
         exit();
     } else {
-        $error_message = "Error: " . $stmt->error;
+        $error_message = "Database Error: " . $stmt->error . " (SQLSTATE: " . $stmt->sqlstate . ")";
+        error_log("Profile save FAILED for user_id: $user_id - " . $stmt->error); // Log failure
     }
     $stmt->close();
 }
+
 
 // Fetch existing profile
 $stmt = $conn->prepare("SELECT * FROM student_profile WHERE user_id = ?");
@@ -148,8 +166,8 @@ $saved_district_id = $profile['district_id'] ?? 0;
     <?php endif; ?>
 
     <?php if($error_message): ?>
-    <div style="color:red;background:#f8d7da;padding:10px;margin-bottom:20px;border-radius:5px;">
-        <?= htmlspecialchars($error_message) ?>
+    <div style="color:red;background:#f8d7da;padding:10px;margin-bottom:20px;border-radius:5px;border-left:4px solid #dc3545;font-weight:500;">
+        <strong>❌ Error:</strong> <?= htmlspecialchars($error_message) ?>
     </div>
     <?php endif; ?>
 
@@ -164,7 +182,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
             value="<?= htmlspecialchars($profile['email'] ?? '') ?>" required><br><br>
 
         Education Level:
-        <select id="education_level" name="education_level" onchange="toggleBelow10thDropdown()" required>
+        <select id="education_level" name="education_level" onchange="try{toggleBelow10thDropdown();}catch(e){console.error(e);}" required>
             <option value="">Select</option>
             <?php
             $edu = $profile['education_level'] ?? '';
@@ -374,7 +392,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
         <input type="tel" name="parent_contact" placeholder="Mobile / Phone"
             value="<?= htmlspecialchars($profile['parent_contact'] ?? '') ?>"><br><br>
 
-        <button type="submit" name="save_profile">
+        <button type="submit" name="save_profile" value="1">
             <?= $is_edit ? '💾 Update Profile' : '✅ Save Profile' ?>
         </button>
 
@@ -400,7 +418,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // After selecting state, load its districts then auto-select saved district
                 loadDistricts(SAVED_STATE_ID, SAVED_DISTRICT_ID);
             }
-        });
+        })
+        .catch(err => console.warn('Error loading states:', err));
 
     // ── State change by user ──
     document.getElementById('state').addEventListener('change', function() {
@@ -425,92 +444,144 @@ function loadDistricts(stateId, autoSelectDistrictId) {
             if(autoSelectDistrictId > 0) {
                 document.getElementById('district').value = autoSelectDistrictId;
             }
+        })
+        .catch(err => {
+            console.warn('Error loading districts:', err);
+            document.getElementById('district').innerHTML = '<option value="">Error loading districts</option>';
         });
 }
 
 function toggleBelow10thDropdown() {
-    const edu = document.getElementById('education_level').value;
-    const divs = {
-        'below_10th':    ['Below 10th'],
-        'tenth_stream':  ['10th Pass(SSC)'],
-        'undergrad_stream': ['Undergraduate'],
-        'postgrad_course':  ['Postgraduate'],
-        'phd_course':       ['PhD'],
-        'course_year':      ['Other']
-    };
+    try {
+        const edu = document.getElementById('education_level').value;
+        const divs = {
+            'below_10th':    ['Below 10th'],
+            'tenth_stream':  ['10th Pass(SSC)'],
+            'undergrad_stream': ['Undergraduate'],
+            'postgrad_course':  ['Postgraduate'],
+            'phd_course':       ['PhD'],
+            'course_year':      ['Other']
+        };
 
-    hide('below_10th_dropdown');
-    hide('tenth_stream_dropdown');
-    hide('undergrad_stream_dropdown');
-    hide('postgrad_course_dropdown');
-    hide('phd_course_dropdown');
-    hide('course_year_fields');
+        hide('below_10th_dropdown');
+        hide('tenth_stream_dropdown');
+        hide('undergrad_stream_dropdown');
+        hide('postgrad_course_dropdown');
+        hide('phd_course_dropdown');
+        hide('course_year_fields');
 
-    if(edu === 'Below 10th')      show('below_10th_dropdown');
-    else if(edu === '10th Pass(SSC)') { show('tenth_stream_dropdown'); toggleDiplomaDropdown(); }
-    else if(edu === 'Undergraduate')  { show('undergrad_stream_dropdown'); toggleScienceGroupDropdown(); }
-    else if(edu === 'Postgraduate')   show('postgrad_course_dropdown');
-    else if(edu === 'PhD')            show('phd_course_dropdown');
-    else if(edu === 'Other')          show('course_year_fields');
+        if(edu === 'Below 10th')      show('below_10th_dropdown');
+        else if(edu === '10th Pass(SSC)') { show('tenth_stream_dropdown'); try{toggleDiplomaDropdown();}catch(e){} }
+        else if(edu === 'Undergraduate')  { show('undergrad_stream_dropdown'); try{toggleScienceGroupDropdown();}catch(e){} }
+        else if(edu === 'Postgraduate')   show('postgrad_course_dropdown');
+        else if(edu === 'PhD')            show('phd_course_dropdown');
+        else if(edu === 'Other')          show('course_year_fields');
+    } catch(e) {
+        console.warn('Education dropdown error:', e);
+    }
 }
 
 function toggleDiplomaDropdown() {
-    const val = document.getElementById('tenth_stream').value;
-    val === 'Diploma' ? show('diploma_course_dropdown') : hide('diploma_course_dropdown');
+    try {
+        const val = document.getElementById('tenth_stream').value;
+        val === 'Diploma' ? show('diploma_course_dropdown') : hide('diploma_course_dropdown');
+    } catch(e) {
+        console.warn('Diploma dropdown error:', e);
+    }
 }
 
 function toggleScienceGroupDropdown() {
-    const stream = document.getElementById('undergrad_stream').value;
-    hide('science_group_dropdown');
-    hide('undergrad_course_dropdown');
+    try {
+        const stream = document.getElementById('undergrad_stream').value;
+        hide('science_group_dropdown');
+        hide('undergrad_course_dropdown');
 
-    if(stream === 'Science') {
-        show('science_group_dropdown');
-        toggleTwelfthCourseDropdown();
-    } else if(stream === 'Commerce' || stream === 'Arts') {
-        show('undergrad_course_dropdown');
-        updateCoursesForStream(stream);
+        if(stream === 'Science') {
+            show('science_group_dropdown');
+            toggleTwelfthCourseDropdown();
+        } else if(stream === 'Commerce' || stream === 'Arts') {
+            show('undergrad_course_dropdown');
+            updateCoursesForStream(stream);
+        }
+    } catch(e) {
+        console.warn('Science group dropdown error:', e);
     }
 }
 
 function toggleTwelfthCourseDropdown() {
-    const stream = document.getElementById('undergrad_stream').value;
-    const group  = document.getElementById('science_group').value;
-    if(stream === 'Science' && group) {
-        show('undergrad_course_dropdown');
-        updateCoursesForScienceGroup(group);
+    try {
+        const stream = document.getElementById('undergrad_stream').value;
+        const group  = document.getElementById('science_group').value;
+        if(stream === 'Science' && group) {
+            show('undergrad_course_dropdown');
+            updateCoursesForScienceGroup(group);
+        }
+    } catch(e) {
+        console.warn('Twelfth course dropdown error:', e);
     }
 }
 
 function updateCoursesForScienceGroup(group) {
-    const map = {
-        'Group A': ['B.E. / B.Tech (Engineering)','BCA (Computer Applications)','B.Sc (Science)'],
-        'Group B': ['MBBS / BDS / BAMS / BHMS (Medical)','B.Sc Nursing','B.Pharm (Pharmacy)','B.Sc (Science)']
-    };
-    fillCourseSelect('undergrad_course', map[group] || []);
+    try {
+        const map = {
+            'Group A': ['B.E. / B.Tech (Engineering)','BCA (Computer Applications)','B.Sc (Science)'],
+            'Group B': ['MBBS / BDS / BAMS / BHMS (Medical)','B.Sc Nursing','B.Pharm (Pharmacy)','B.Sc (Science)']
+        };
+        fillCourseSelect('undergrad_course', map[group] || []);
+    } catch(e) {
+        console.warn('Course update error:', e);
+    }
 }
 
 function updateCoursesForStream(stream) {
-    const map = {
-        'Commerce': ['B.Com (Commerce)','BBA (Business Administration)','Hotel Management / Tourism','B.Ed (Integrated)'],
-        'Arts':     ['B.A (Arts / Humanities)','Fashion Designing / Fine Arts','LLB (Law - 5 Year)','Hotel Management / Tourism','B.Ed (Integrated)']
-    };
-    fillCourseSelect('undergrad_course', map[stream] || []);
+    try {
+        const map = {
+            'Commerce': ['B.Com (Commerce)','BBA (Business Administration)','Hotel Management / Tourism','B.Ed (Integrated)'],
+            'Arts':     ['B.A (Arts / Humanities)','Fashion Designing / Fine Arts','LLB (Law - 5 Year)','Hotel Management / Tourism','B.Ed (Integrated)']
+        };
+        fillCourseSelect('undergrad_course', map[stream] || []);
+    } catch(e) {
+        console.warn('Stream update error:', e);
+    }
 }
 
 function fillCourseSelect(id, courses) {
-    // Preserve previously saved value if it exists
-    const saved = document.getElementById(id).dataset.saved || '';
-    let html = '<option value="">Select Course</option>';
-    courses.forEach(c => {
-        html += `<option value="${c}" ${c === saved ? 'selected' : ''}>${c}</option>`;
-    });
-    document.getElementById(id).innerHTML = html;
+    try {
+        // Preserve previously saved value if it exists
+        const saved = document.getElementById(id).dataset.saved || '';
+        let html = '<option value="">Select Course</option>';
+        courses.forEach(c => {
+            html += `<option value="${c}" ${c === saved ? 'selected' : ''}>${c}</option>`;
+        });
+        document.getElementById(id).innerHTML = html;
+    } catch(e) {
+        console.warn('Course select error:', e);
+    }
 }
 
 function show(id) { const el = document.getElementById(id); if(el) el.style.display = 'block'; }
 function hide(id) { const el = document.getElementById(id); if(el) el.style.display = 'none'; }
+
+// Ensure form can always be submitted
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.profile-form');
+    if(form) {
+        const btn = form.querySelector('button[type="submit"]');
+        if(btn) {
+            btn.addEventListener('click', function(e) {
+                // Allow form submission (disable e.preventDefault)
+                if(form.checkValidity() === false) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                } else {
+                    btn.disabled = false; // Ensure button stays enabled
+                }
+            });
+        }
+    }
+});
 </script>
 
 </body>
 </html>
+

@@ -21,7 +21,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error'], $_SESSION['profile_s
 // Fetch student profile (safer)
 $profile_query = mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=" . intval($user_id));
 $profile = $profile_query ? mysqli_fetch_assoc($profile_query) : null;
-if (!$profile) {
+$has_profile = !empty($profile);
+if (!$has_profile) {
     $profile = [
         'category' => null,
         'marks' => 0,
@@ -36,17 +37,6 @@ $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
 
-// Build scholarship query
-$where_conditions = array("status = 'active'");
-
-$where_clause = implode(" AND ", $where_conditions);
-
-// Count total scholarships
-$count_result = mysqli_query($conn, "SELECT COUNT(*) as total FROM scholarships WHERE $where_clause");
-$count_row = mysqli_fetch_assoc($count_result);
-$total_scholarships = $count_row['total'];
-$total_pages = ceil($total_scholarships / $per_page);
-
 // Sort options
 $order_clause = "deadline ASC";
 
@@ -58,10 +48,10 @@ if(!$table_check) {
     $setup_needed = true;
     $total_scholarships = 0;
     $total_pages = 1;
-    $scholarships_result = false;
+    $scholarships = [];
 } else {
-    // Fetch scholarships with WHERE and ORDER applied
-    $scholarships_query = "SELECT * FROM scholarships WHERE $where_clause ORDER BY $order_clause LIMIT $offset, $per_page";
+    // Fetch all active scholarships first; eligibility filter is applied in PHP
+    $scholarships_query = "SELECT * FROM scholarships WHERE status='active' ORDER BY $order_clause";
     $scholarships_result = mysqli_query($conn, $scholarships_query);
 
     if(!$scholarships_result) {
@@ -75,7 +65,7 @@ if(!$table_check) {
     }
 }
 
-// Function to determine eligibility (safe checks)
+// Function to determine eligibility (fallback checks based on scholarship table columns)
 function checkEligibility($scholarship, $student_profile) {
     $eligibility = ['status' => 'eligible', 'issues' => []];
 
@@ -114,6 +104,138 @@ function checkEligibility($scholarship, $student_profile) {
 
     return $eligibility;
 }
+
+// Rule-based eligibility using eligibility_rules table
+function checkEligibilityByRules($conn, $scholarship, $student_profile) {
+    static $rules_cache = [];
+    static $profile_columns = null;
+    static $rules_table_exists = null;
+
+    $sid = intval($scholarship['scholarship_id'] ?? 0);
+    if($sid <= 0) {
+        return checkEligibility($scholarship, $student_profile);
+    }
+
+    if($rules_table_exists === null) {
+        $rules_table_exists = mysqli_query($conn, "SELECT 1 FROM eligibility_rules LIMIT 1") ? true : false;
+    }
+
+    if($profile_columns === null) {
+        $profile_columns = [];
+        $columns_result = mysqli_query($conn, "SHOW COLUMNS FROM student_profile");
+        if($columns_result) {
+            while($col = mysqli_fetch_assoc($columns_result)) {
+                $profile_columns[$col['Field']] = true;
+            }
+        }
+    }
+
+    if(!$rules_table_exists) {
+        return checkEligibility($scholarship, $student_profile);
+    }
+
+    if(!isset($rules_cache[$sid])) {
+        $rules_cache[$sid] = [];
+        $rules_q = mysqli_query($conn, "SELECT field_name, operator, value FROM eligibility_rules WHERE scholarship_id=$sid");
+        if($rules_q) {
+            while($r = mysqli_fetch_assoc($rules_q)) {
+                $rules_cache[$sid][] = $r;
+            }
+        }
+    }
+
+    $rules = $rules_cache[$sid];
+    if(empty($rules)) {
+        return checkEligibility($scholarship, $student_profile);
+    }
+
+    $eligibility = ['status' => 'eligible', 'issues' => []];
+    $allowed_operators = ['=', '>=', '<=', '>', '<'];
+
+    foreach($rules as $r) {
+        $field = trim($r['field_name'] ?? '');
+        $operator = trim($r['operator'] ?? '=');
+        $raw_value = trim($r['value'] ?? '');
+
+        if($field === '' || !isset($profile_columns[$field])) {
+            continue;
+        }
+
+        if(!in_array($operator, $allowed_operators, true)) {
+            $operator = '=';
+        }
+
+        // Non-restrictive rules
+        if(strcasecmp($raw_value, 'All') === 0 || strcasecmp($raw_value, 'All India') === 0) {
+            continue;
+        }
+
+        $student_value = trim((string)($student_profile[$field] ?? ''));
+
+        // '=' with comma list => IN behavior
+        if($operator === '=' && strpos($raw_value, ',') !== false) {
+            $parts = array_filter(array_map('trim', explode(',', $raw_value)), function($v){ return $v !== ''; });
+            $matched = false;
+            foreach($parts as $p) {
+                if(strcasecmp($student_value, $p) === 0) {
+                    $matched = true;
+                    break;
+                }
+            }
+            if(!$matched) {
+                $eligibility['issues'][] = "$field mismatch";
+            }
+            continue;
+        }
+
+        if(in_array($operator, ['>=', '<=', '>', '<'], true)) {
+            $student_num = is_numeric($student_value) ? floatval($student_value) : 0;
+            $rule_num = is_numeric($raw_value) ? floatval($raw_value) : 0;
+
+            $ok = true;
+            if($operator === '>=') $ok = $student_num >= $rule_num;
+            if($operator === '<=') $ok = $student_num <= $rule_num;
+            if($operator === '>')  $ok = $student_num > $rule_num;
+            if($operator === '<')  $ok = $student_num < $rule_num;
+
+            if(!$ok) {
+                $eligibility['issues'][] = "$field condition failed";
+            }
+            continue;
+        }
+
+        // '=' exact compare (case-insensitive)
+        if(strcasecmp($student_value, $raw_value) !== 0) {
+            $eligibility['issues'][] = "$field mismatch";
+        }
+    }
+
+    if(!empty($eligibility['issues'])) {
+        $eligibility['status'] = 'not_eligible';
+    }
+
+    return $eligibility;
+}
+
+// Apply eligibility filter for student dashboard (show only eligible)
+$eligible_scholarships = [];
+if(!empty($scholarships) && $has_profile) {
+    foreach($scholarships as $s) {
+        $elig = checkEligibilityByRules($conn, $s, $profile);
+        if(($elig['status'] ?? 'not_eligible') === 'eligible') {
+            $s['_eligibility'] = $elig;
+            $eligible_scholarships[] = $s;
+        }
+    }
+}
+
+$total_scholarships = count($eligible_scholarships);
+$total_pages = max(1, (int)ceil($total_scholarships / $per_page));
+if($page > $total_pages) {
+    $page = $total_pages;
+    $offset = ($page - 1) * $per_page;
+}
+$scholarships = array_slice($eligible_scholarships, $offset, $per_page);
 
 // Fetch states for filter
 $states_result = mysqli_query($conn, "SELECT * FROM states ORDER BY state_name");
@@ -177,6 +299,7 @@ try {
         </div>
         <div class="header-actions">
             <a href="profile.php">Update Profile</a>
+            <a href="check_eligibility.php">Check Eligibility</a>
             <a href="logout.php" class="logout">Logout</a>
         </div>
     </div>
@@ -206,7 +329,7 @@ try {
     </div>
     <?php endif; ?>
     
-    <?php if(!$profile): ?>
+    <?php if(!$has_profile): ?>
     <div class="alert">
          Please <a href="profile.php" style="color: inherit; text-decoration: underline;">complete your profile</a> to see accurate eligibility.
     </div>
@@ -227,7 +350,7 @@ try {
         <div class="scholarships-grid">
             <?php foreach($scholarships as $scholarship): ?>
             <?php 
-                $eligibility = checkEligibility($scholarship, $profile);
+                $eligibility = $scholarship['_eligibility'] ?? checkEligibilityByRules($conn, $scholarship, $profile);
                 $days_left = round((strtotime($scholarship['deadline']) - time()) / (60 * 60 * 24));
                 $is_urgent = $days_left <= 7 && $days_left >= 0;
             ?>
@@ -267,7 +390,7 @@ try {
                 </div>
                 
                 <div class="card-footer">
-                    <a href="view_applications.php?id=<?php echo $scholarship['scholarship_id']; ?>" class="btn-details">View Details</a>
+                    <a href="scholarship_details.php?id=<?php echo $scholarship['scholarship_id']; ?>" class="btn-details">View Details</a>
                     <?php if($eligibility['status'] == 'eligible'): ?>
                     <a href="apply_scholarship.php?id=<?php echo $scholarship['scholarship_id']; ?>" class="btn-apply">Apply Now</a>
                     <?php endif; ?>

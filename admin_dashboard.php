@@ -35,7 +35,7 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
             <li><a href="add_scholarship.php">Add Scholarship</a></li>
             <li><a href="manage_scholarships.php">Manage Scholarships</a></li>
             <li><a href="add_eligibility_rule.php">Add Eligibility Rules</a></li>
-            <li><a href="eligible_students.php">Eligible Students</a></li>
+            <li><a href="eligible_students.php">Check Eligibility</a></li>
             <li><a href="logout.php">Logout</a></li>
         </ul>
     </div>

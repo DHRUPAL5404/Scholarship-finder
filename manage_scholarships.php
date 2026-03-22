@@ -39,6 +39,10 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
         <div class="manage-scholarship-card">
             <b><?= $s['title'] ?></b><br>
             Status: <span class="status-chip <?= $s['status'] === 'active' ? 'success' : 'muted' ?>"><?= $s['status'] ?></span><br>
+            <?php if(!empty($s['start_date']) || !empty($s['end_date'])): ?>
+            Start Date: <?= htmlspecialchars($s['start_date'] ?? '-') ?><br>
+            End Date: <?= htmlspecialchars($s['end_date'] ?? '-') ?><br>
+            <?php endif; ?>
             <a href="toggle_scholarship.php?id=<?= $s['scholarship_id'] ?>">Toggle Status</a>
         </div>
         <?php } ?>

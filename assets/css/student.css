@@ -186,7 +186,7 @@
 }
 
 .no-scholarships::before {
-    content: '🔍';
+    
     display: block;
     font-size: 4rem;
     margin-bottom: 1rem;

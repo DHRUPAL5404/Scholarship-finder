@@ -110,6 +110,8 @@ CREATE TABLE scholarships (
     scholarship_id INT AUTO_INCREMENT PRIMARY KEY,
     title          VARCHAR(150) NOT NULL,
     description    TEXT,
+    start_date     DATE,
+    end_date       DATE,
     deadline       DATE,
     status         ENUM('active','inactive') DEFAULT 'active',
     created_at     DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -180,18 +182,18 @@ VALUES (
 );
 
 -- Scholarships (3 samples with different rule counts)
-INSERT INTO scholarships (title, description, deadline, status) VALUES
+INSERT INTO scholarships (title, description, start_date, end_date, deadline, status) VALUES
 ('Post Matric SC Scholarship',
  'For SC category UG students from low-income families.',
- '2026-03-31', 'active'),
+ '2026-01-01', '2026-03-31', '2026-03-31', 'active'),
 
 ('Merit Scholarship',
  'For high-achieving students across all categories.',
- '2026-04-30', 'active'),
+ '2026-02-01', '2026-04-30', '2026-04-30', 'active'),
 
 ('Minority Girls Scholarship',
  'For minority female students in government institutions.',
- '2026-05-15', 'active');
+ '2026-03-01', '2026-05-15', '2026-05-15', 'active');
 
 -- Eligibility Rules
 -- Uses subqueries for scholarship_id — safe even if IDs change

@@ -43,6 +43,8 @@ $scholarships_table = "CREATE TABLE IF NOT EXISTS scholarships (
     min_marks DECIMAL(5,2) DEFAULT 0,
     max_family_income INT DEFAULT 0,
     state_id INT DEFAULT NULL,
+    start_date DATE DEFAULT NULL,
+    end_date DATE DEFAULT NULL,
     deadline DATE,
     status ENUM('active', 'inactive') DEFAULT 'active',
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
