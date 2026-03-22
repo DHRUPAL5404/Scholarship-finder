@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     header("Location: login.php");
@@ -14,7 +14,10 @@ $query_error = '';
 if(isset($_POST['check'])){
     $sid = $selected_scholarship;
 
-    $rules = mysqli_query($conn,"SELECT * FROM eligibility_rules WHERE scholarship_id=$sid");
+    $stmt_rules = mysqli_prepare($conn, "SELECT * FROM eligibility_rules WHERE scholarship_id=?");
+    mysqli_stmt_bind_param($stmt_rules, "i", $sid);
+    mysqli_stmt_execute($stmt_rules);
+    $rules = mysqli_stmt_get_result($stmt_rules);
     $conditions = [];
 
     $allowed_operators = array('=', '>=', '<=', '>', '<');

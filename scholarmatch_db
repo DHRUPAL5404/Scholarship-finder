@@ -168,10 +168,7 @@ INSERT INTO users (full_name, email, mobile, password, role) VALUES
 
 -- Student Profile
 -- Uses subqueries for state_id and district_id — no hardcoded IDs, no FK errors
-INSERT INTO student_profile
-(user_id, full_name, gender, age, state_id, district_id, education_level,
- course, current_year, marks, family_income, category,
- minority_status, institution_type, disability_percent)
+INSERT INTO student_profile (user_id, full_name, gender, age, state_id, district_id, education_level, course, current_year, marks, family_income, category, minority_status, institution_type, disability_percent)
 VALUES (
     (SELECT user_id FROM users WHERE email = 'ravi@gmail.com'),
     'Ravi Patel', 'Male', 20,
@@ -242,9 +239,67 @@ INSERT INTO eligibility_rules (scholarship_id, field_name, operator, value) VALU
     'institution_type', '=', 'Government'
 );
 
+-- Show student profile with fallback name
+SELECT COALESCE(NULLIF(sp.full_name, ''), u.name) AS student_name, sp.*
+FROM student_profile sp
+JOIN users u ON u.user_id = sp.user_id;
+
 /* ======================================
    10. STATES DATA (All 28 Indian States)
 ====================================== */
+
+/* ======================================
+   10. STATES DATA (All 28 Indian States)
+====================================== */
+SELECT COALESCE(NULLIF(sp.full_name, ''), u.name) AS student_name, sp.*
+FROM student_profile sp
+JOIN users u ON u.user_id = sp.user_id;
+
+/* ======================================
+   9. ELIGIBLE SCHOLARSHIPS QUERY
+   (RULE-BASED MATCHING)
+====================================== */
+SELECT DISTINCT s.scholarship_id, s.title, s.description, s.deadline
+FROM scholarships s
+JOIN eligibility_rules er ON s.scholarship_id = er.scholarship_id
+JOIN student_profile sp ON sp.user_id = 1
+WHERE s.status = 'active'
+AND (
+    (er.field_name = 'marks' AND sp.marks >= er.value) OR
+    (er.field_name = 'family_income' AND sp.family_income <= er.value) OR
+    (er.field_name = 'category' AND sp.category = er.value) OR
+    (er.field_name = 'minority_status' AND sp.minority_status = er.value)
+);
+ALTER TABLE users
+ADD mobile_number VARCHAR(15) UNIQUE;
+
+ALTER TABLE users
+CHANGE mobile_number mobile VARCHAR(15);
+
+ALTER TABLE student_profile
+DROP COLUMN IF EXISTS state;
+
+CREATE TABLE IF NOT EXISTS states (
+  state_id INT AUTO_INCREMENT PRIMARY KEY,
+  state_name VARCHAR(100) NOT NULL
+);
+CREATE TABLE IF NOT EXISTS districts (
+  district_id INT AUTO_INCREMENT PRIMARY KEY,
+  district_name VARCHAR(100) NOT NULL,
+  state_id INT,
+  FOREIGN KEY (state_id) REFERENCES states(state_id)
+);
+CREATE TABLE IF NOT EXISTS sub_districts (
+  sub_district_id INT AUTO_INCREMENT PRIMARY KEY,
+  sub_district_name VARCHAR(100) NOT NULL,
+  district_id INT,
+  FOREIGN KEY (district_id) REFERENCES districts(district_id)
+);
+ALTER TABLE student_profile
+ADD COLUMN IF NOT EXISTS state_id INT,
+ADD COLUMN IF NOT EXISTS district_id INT,
+ADD COLUMN IF NOT EXISTS sub_district_id INT;
+
 INSERT INTO states (state_name) VALUES
 ('Andhra Pradesh'),('Arunachal Pradesh'),('Assam'),('Bihar'),
 ('Chhattisgarh'),('Goa'),('Gujarat'),('Haryana'),
@@ -517,7 +572,46 @@ INSERT INTO districts (district_name, state_id) VALUES
    rules for a scholarship to be eligible
 ====================================== */
 
--- Replace '1' with the actual user_id in PHP
+-- Apply schema corrections and updates
+ALTER TABLE student_profile
+DROP COLUMN IF EXISTS state;
+
+CREATE TABLE IF NOT EXISTS states (
+  state_id INT AUTO_INCREMENT PRIMARY KEY,
+  state_name VARCHAR(100) NOT NULL
+);
+
+ALTER TABLE student_profile
+ADD COLUMN IF NOT EXISTS disability_type VARCHAR(100) AFTER disability_percent,
+ADD COLUMN IF NOT EXISTS parent_name VARCHAR(100) AFTER age,
+ADD COLUMN IF NOT EXISTS parent_occupation VARCHAR(100) AFTER parent_name,
+ADD COLUMN IF NOT EXISTS parent_contact VARCHAR(15) AFTER parent_occupation,
+ADD COLUMN IF NOT EXISTS postgrad_course_other VARCHAR(100) AFTER course,
+ADD COLUMN IF NOT EXISTS phd_course_other VARCHAR(100) AFTER postgrad_course_other;
+
+ALTER TABLE eligibility_rules
+MODIFY field_name ENUM(
+  'marks',
+  'family_income',
+  'category',
+  'gender',
+  'state_id',
+  'education_level',
+  'institution_type',
+  'minority_status',
+  'disability_percent',
+  'age',
+  'course'
+);
+
+ALTER TABLE eligibility_rules
+ADD COLUMN IF NOT EXISTS scholarship_title VARCHAR(150) NOT NULL AFTER scholarship_id;
+
+ALTER TABLE student_profile
+ADD COLUMN IF NOT EXISTS full_name VARCHAR(100) NOT NULL AFTER user_id;
+
+-- Eligibility matching query
+-- Replace user_id=1 with actual current user_id
 SELECT s.scholarship_id, s.title, s.description, s.deadline
 FROM scholarships s
 WHERE s.status = 'active'

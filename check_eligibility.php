@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include "db.php";
 
@@ -10,7 +10,10 @@ if(!isset($_SESSION['user_id'])){
 $user_id = $_SESSION['user_id'];
 
 /* Fetch student profile */
-$profile_q = mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$user_id");
+$stmt = mysqli_prepare($conn, "SELECT * FROM student_profile WHERE user_id=?");
+mysqli_stmt_bind_param($stmt, "i", $user_id);
+mysqli_stmt_execute($stmt);
+$profile_q = mysqli_stmt_get_result($stmt);
 $student = mysqli_fetch_assoc($profile_q);
 
 if(!$student){
@@ -46,10 +49,10 @@ if(!$student){
             while($sch = mysqli_fetch_assoc($scholarships)){
                 $sid = $sch['scholarship_id'];
                 
-                $rules = mysqli_query(
-                    $conn,
-                    "SELECT * FROM eligibility_rules WHERE scholarship_id=$sid"
-                );
+                $stmt_rules = mysqli_prepare($conn, "SELECT * FROM eligibility_rules WHERE scholarship_id=?");
+                mysqli_stmt_bind_param($stmt_rules, "i", $sid);
+                mysqli_stmt_execute($stmt_rules);
+                $rules = mysqli_stmt_get_result($stmt_rules);
                 
                 $eligible = true;
                 
