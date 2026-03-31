@@ -27,32 +27,20 @@ if (!$student) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Check Eligibility - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/student.css?v=<?php echo time(); ?>">
 </head>
 
 <body>
 
     <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="index.php#how-it-works">How It Works</a></li>
-            <li><a href="index.php#features">Features</a></li>
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <li><a href="student_dashboard.php">Dashboard</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            <?php else: ?>
-                <li><a href="login.php">Login</a></li>
-                <li><a href="register.php">Register</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
+    <?php include "includes/navbar.php"; ?>
 
     <div class="container">
         <?php if (isset($error)): ?>
             <p><?php echo htmlspecialchars($error); ?></p>
         <?php else: ?>
-            <h2>Eligible Scholarships ðŸŽ¯</h2>
+            <h2>Eligible Scholarships</h2>
 
             <?php
             /* Fetch active scholarships */
@@ -142,7 +130,7 @@ if (!$student) {
             }
 
             if (!$found) {
-                echo "<p>ðŸ˜• No scholarships matched your profile.</p>";
+                echo "<p>No scholarships matched your profile.</p>";
             }
             ?>
         <?php endif; ?>

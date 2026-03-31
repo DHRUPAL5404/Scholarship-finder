@@ -23,7 +23,7 @@ session_start();
             <a href="login.php">Login</a>
             <a href="register.php">Register</a>
         <?php else: ?>
-            <p>Welcome back, <?php echo $_SESSION['user_name']; ?></p>
+            <p>Welcome back, <?php echo htmlspecialchars($_SESSION['user_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
             <?php if($_SESSION['role'] == 'student'): ?>
                 <a href="student_dashboard.php">Go to Dashboard</a>
             <?php elseif($_SESSION['role'] == 'admin'): ?>

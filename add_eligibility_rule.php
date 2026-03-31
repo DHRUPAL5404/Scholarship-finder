@@ -111,10 +111,12 @@ $sch_stmt->close();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Eligibility Rule - Scholar Match</title>
-    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <div class="eligibility-container">
+    <?php include "includes/navbar.php"; ?>
+    <div class="eligibility-container container">
         <h1>Add Eligibility Rule</h1>
 
         <?php if($flash_success): ?>
@@ -252,5 +254,6 @@ $sch_stmt->close();
             </div>
         </form>
     </div>
+    <?php include "includes/footer.php"; ?>
 </body>
 </html>

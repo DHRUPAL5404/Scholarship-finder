@@ -3,21 +3,36 @@ session_start();
 include "db.php";
 header('Content-Type: application/json');
 
+function sanitizeOutput($data) {
+    if (is_array($data)) {
+        foreach ($data as $key => $value) {
+            $data[$key] = sanitizeOutput($value);
+        }
+        return $data;
+    } elseif (is_string($data)) {
+        return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
+    }
+    return $data;
+}
+
 // Check if user is logged in and is a student
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'student'){
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(sanitizeOutput(['error' => 'Unauthorized']));
     exit();
 }
 
 $user_id = $_SESSION['user_id'];
 
-// Fetch student profile
-$profile = mysqli_fetch_assoc(
-    mysqli_query($conn, "SELECT * FROM student_profile WHERE user_id=$user_id")
-);
+// Fetch student profile using prepared statement
+$stmt = $conn->prepare("SELECT * FROM student_profile WHERE user_id=?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$profile_q = $stmt->get_result();
+$profile = $profile_q->fetch_assoc();
+$stmt->close();
 
 if(!$profile) {
-    echo json_encode(['error' => 'Student profile not found']);
+    echo json_encode(sanitizeOutput(['error' => 'Student profile not found']));
     exit();
 }
 
@@ -25,17 +40,20 @@ if(!$profile) {
 $scholarship_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if($scholarship_id == 0) {
-    echo json_encode(['error' => 'Scholarship ID required']);
+    echo json_encode(sanitizeOutput(['error' => 'Scholarship ID required']));
     exit();
 }
 
-// Fetch scholarship details
-$scholarship = mysqli_fetch_assoc(
-    mysqli_query($conn, "SELECT * FROM scholarships WHERE scholarship_id=$scholarship_id")
-);
+// Fetch scholarship details using prepared statement
+$stmt2 = $conn->prepare("SELECT * FROM scholarships WHERE scholarship_id=?");
+$stmt2->bind_param("i", $scholarship_id);
+$stmt2->execute();
+$scholarship_q = $stmt2->get_result();
+$scholarship = $scholarship_q->fetch_assoc();
+$stmt2->close();
 
 if(!$scholarship) {
-    echo json_encode(['error' => 'Scholarship not found']);
+    echo json_encode(sanitizeOutput(['error' => 'Scholarship not found']));
     exit();
 }
 
@@ -122,9 +140,9 @@ function checkEligibility($scholarship, $student_profile) {
 
 $eligibility = checkEligibility($scholarship, $profile);
 
-echo json_encode([
+echo json_encode(sanitizeOutput([
     'scholarship_id' => $scholarship['scholarship_id'],
     'title' => $scholarship['title'],
     'eligibility' => $eligibility
-]);
+]));
 ?>

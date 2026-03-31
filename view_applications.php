@@ -7,10 +7,10 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role']!='admin'){
 }
 
 $res = @mysqli_query($conn,"
-SELECT a.*,u.full_name,s.title 
-FROM applications a
-JOIN users u ON a.student_id=u.user_id
-JOIN scholarships s ON s.scholarship_id=a.scholarship_id
+SELECT a.*, u.full_name, s.title 
+FROM scholarship_applications a
+JOIN users u ON a.user_id = u.user_id
+JOIN scholarships s ON s.scholarship_id = a.scholarship_id
 ");
 ?>
 
