@@ -175,12 +175,22 @@ $indexes = array(
     "CREATE INDEX IF NOT EXISTS idx_scholarship_deadline ON scholarships(deadline)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_category ON scholarships(category)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_state ON scholarships(state_id)",
-    "CREATE INDEX IF NOT EXISTS idx_applications_user ON scholarship_applications(user_id)"
+    "CREATE INDEX IF NOT EXISTS idx_applications_user ON scholarship_applications(user_id)",
+    "CREATE INDEX IF NOT EXISTS idx_applications_scholarship ON scholarship_applications(scholarship_id)",
+    // Heavily queried in eligibility checks — every scholarship card triggers a lookup here
+    "CREATE INDEX IF NOT EXISTS idx_eligibility_rules_scholarship ON eligibility_rules(scholarship_id)",
+    // student_profile.user_id already has a UNIQUE constraint (which creates an implicit index),
+    // but we add an explicit named index for clarity and query planner hints
+    "CREATE INDEX IF NOT EXISTS idx_student_profile_user ON student_profile(user_id)"
 );
 
+$index_ok = 0;
 foreach($indexes as $index_query) {
-    @mysqli_query($conn, $index_query);
+    if(@mysqli_query($conn, $index_query)){
+        $index_ok++;
+    }
 }
+$results[] = "✓ {$index_ok}/" . count($indexes) . " performance indexes created/verified";
 
 // Insert sample states if table is empty
 $state_count = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM states"));

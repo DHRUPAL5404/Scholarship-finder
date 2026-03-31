@@ -50,7 +50,7 @@ if (!$student) {
 
     <div class="container">
         <?php if (isset($error)): ?>
-            <p><?php echo $error; ?></p>
+            <p><?php echo htmlspecialchars($error); ?></p>
         <?php else: ?>
             <h2>Eligible Scholarships ðŸŽ¯</h2>
 
@@ -126,12 +126,16 @@ if (!$student) {
 
                 if ($eligible) {
                     $found = true;
+                    $safe_title       = htmlspecialchars($sch['title']);
+                    $safe_description = htmlspecialchars($sch['description']);
+                    $safe_deadline    = htmlspecialchars($sch['deadline']);
+                    $safe_sid         = intval($sid);
                     echo "
                     <div class='eligible-card'>
-                        <h3>{$sch['title']}</h3>
-                        <p>{$sch['description']}</p>
-                        <p><b>Deadline:</b> {$sch['deadline']}</p>
-                        <a href='apply.php?sid={$sid}' class='btn'>Apply Now</a>
+                        <h3>{$safe_title}</h3>
+                        <p>{$safe_description}</p>
+                        <p><b>Deadline:</b> {$safe_deadline}</p>
+                        <a href='apply.php?sid={$safe_sid}' class='btn'>Apply Now</a>
                     </div>
                     ";
                 }
