@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include "db.php";
 
@@ -141,10 +141,8 @@ $saved_district_id = $profile['district_id'] ?? 0;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $is_edit ? 'Edit' : 'Create' ?> Profile - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/student.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/validation.css?v=<?php echo time(); ?>">
+    <title><?= $is_edit ? 'Edit' : 'Create' ?> Profile - Scholar Match</title>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
@@ -153,21 +151,21 @@ $saved_district_id = $profile['district_id'] ?? 0;
 <div class="container profile-page">
 
     <!-- Header shows Edit vs Create mode -->
-    <h2><?= $is_edit ? '✏️ Edit Your Profile' : '📝 Complete Your Profile' ?></h2>
+    <h2><?= $is_edit ? '?? Edit Your Profile' : '?? Complete Your Profile' ?></h2>
 
     <?php if($is_edit): ?>
     <div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:10px 16px;margin-bottom:20px;border-radius:4px;">
-        ✅ Your profile is already saved. You can update any field below and save again.
+        ? Your profile is already saved. You can update any field below and save again.
     </div>
     <?php else: ?>
     <div style="background:#fff3e0;border-left:4px solid #ff9800;padding:10px 16px;margin-bottom:20px;border-radius:4px;">
-        ⚠️ Please complete your profile to see accurate scholarship eligibility.
+        ?? Please complete your profile to see accurate scholarship eligibility.
     </div>
     <?php endif; ?>
 
     <?php if($error_message): ?>
     <div style="color:red;background:#f8d7da;padding:10px;margin-bottom:20px;border-radius:5px;border-left:4px solid #dc3545;font-weight:500;">
-        <strong>❌ Error:</strong> <?= htmlspecialchars($error_message) ?>
+        <strong>? Error:</strong> <?= htmlspecialchars($error_message) ?>
     </div>
     <?php endif; ?>
 
@@ -200,8 +198,8 @@ $saved_district_id = $profile['district_id'] ?? 0;
             <label>Select Standard:</label>
             <select name="below_10th_level">
                 <option value="">Select Standard</option>
-                <option value="Primary School (Std 1-8)" <?= (strpos($edu,'Primary School')!==false)?'selected':'' ?>>Primary School (Std 1–8)</option>
-                <option value="Secondary School - Appearing (Std 9-10)" <?= (strpos($edu,'Secondary School')!==false)?'selected':'' ?>>Secondary School – Appearing (Std 9–10)</option>
+                <option value="Primary School (Std 1-8)" <?= (strpos($edu,'Primary School')!==false)?'selected':'' ?>>Primary School (Std 1�8)</option>
+                <option value="Secondary School - Appearing (Std 9-10)" <?= (strpos($edu,'Secondary School')!==false)?'selected':'' ?>>Secondary School � Appearing (Std 9�10)</option>
             </select><br><br>
         </div>
 
@@ -311,7 +309,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
         <input type="number" name="marks" placeholder="Marks (%)" min="0" max="100"
             value="<?= htmlspecialchars($profile['marks'] ?? '') ?>" required><br><br>
 
-        Family Income (₹ per year):
+        Family Income (? per year):
         <input type="number" name="family_income" placeholder="Annual Family Income"
             value="<?= htmlspecialchars($profile['family_income'] ?? '') ?>" required><br><br>
 
@@ -393,7 +391,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
             value="<?= htmlspecialchars($profile['parent_contact'] ?? '') ?>"><br><br>
 
         <button type="submit" name="save_profile" value="1">
-            <?= $is_edit ? '💾 Update Profile' : '✅ Save Profile' ?>
+            <?= $is_edit ? '?? Update Profile' : '? Save Profile' ?>
         </button>
 
     </form>
@@ -408,7 +406,7 @@ const SAVED_STATE_ID    = <?= intval($saved_state_id) ?>;
 const SAVED_DISTRICT_ID = <?= intval($saved_district_id) ?>;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // ── State dropdown: load all states, then auto-select saved one ──
+    // -- State dropdown: load all states, then auto-select saved one --
     fetch('get_states.php')
         .then(res => res.text())
         .then(html => {
@@ -421,12 +419,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(err => console.warn('Error loading states:', err));
 
-    // ── State change by user ──
+    // -- State change by user --
     document.getElementById('state').addEventListener('change', function() {
         loadDistricts(this.value, 0);
     });
 
-    // ── Trigger education dropdowns on load ──
+    // -- Trigger education dropdowns on load --
     toggleBelow10thDropdown();
 });
 

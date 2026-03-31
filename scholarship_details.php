@@ -35,10 +35,8 @@ if($scholarship_id > 0) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scholarship Details - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/student.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/validation.css?v=<?php echo time(); ?>">
+    <title>Scholarship Details - Scholar Match</title>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 

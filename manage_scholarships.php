@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     header("Location: login.php");
@@ -14,10 +14,8 @@ unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Scholarships - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/validation.css?v=<?php echo time(); ?>">
+    <title>Manage Scholarships - Scholar Match</title>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 

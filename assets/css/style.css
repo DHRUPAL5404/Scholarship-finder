@@ -61,14 +61,66 @@ nav {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.nav-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.nav-logo-link,
+.footer-logo-link {
+    text-decoration: none;
+    display: inline-block;
+}
+
+.nav-logo-link:hover .brand-container svg,
+.footer-logo-link:hover .brand-container svg {
+    transform: scale(1.05) rotate(-3deg);
+}
+
+.brand-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.brand-icon {
+    width: 36px;
+    height: 36px;
+    transition: var(--transition);
+}
+
+.brand-text {
+    color: #163f82;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    font-family: 'Inter', sans-serif;
+}
+
+.nav-logo-link .brand-text {
+    color: white;
+}
+
+.footer-logo-link .brand-text {
+    color: white;
+    font-size: 1.25rem;
+}
+
+.footer-logo-link {
+    margin-bottom: 1rem;
+}
+
+
 nav ul {
     list-style: none;
     display: flex;
     justify-content: flex-end;
     align-items: center;
     gap: 2rem;
-    max-width: 1400px;
-    margin: 0 auto;
 }
 
 nav ul li a {
@@ -629,6 +681,19 @@ footer h4 {
     color: white;
     font-size: 1.1rem;
     margin-bottom: 1rem;
+}
+
+.footer-logo {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #ffffff, #60a5fa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
 }
 
 footer p {
@@ -1698,6 +1763,20 @@ input:disabled,
 textarea:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* Error state for inputs */
+input.input-error,
+textarea.input-error,
+select.input-error {
+    border-color: var(--danger-color) !important;
+    background-color: rgba(231, 76, 60, 0.02);
+}
+
+input.input-error:focus,
+textarea.input-error:focus,
+select.input-error:focus {
+    box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1) !important;
 }
 
 /* Responsive validation on mobile */

@@ -87,10 +87,8 @@ if(isset($_POST['check'])){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eligible Students - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/validation.css?v=<?php echo time(); ?>">
+    <title>Eligible Students - Scholar Match</title>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 

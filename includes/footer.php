@@ -7,8 +7,10 @@ if(session_status() === PHP_SESSION_NONE) {
 <!-- Footer -->
 <footer id="footer">
     <div>
-        <h4>ScholarMatch</h4>
-        <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
+        <a href="index.php" class="footer-logo-link">
+            <?php include __DIR__ . "/brand.php"; ?>
+        </a>
+        <p>&copy; <?php echo date('Y'); ?> Scholar Match. All rights reserved.</p>
     </div>
     <div>
         <h4>Quick Links</h4>

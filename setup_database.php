@@ -161,6 +161,14 @@ if(mysqli_query($conn, $alter_table)) {
     $results[] = "⚠ Category column check: " . mysqli_error($conn);
 }
 
+// Check student_profile table structure and add missing email column
+$alter_profile_email = "ALTER TABLE student_profile ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER full_name";
+if(mysqli_query($conn, $alter_profile_email)) {
+    $results[] = "✓ Student profile email column verified";
+} else {
+    $results[] = "⚠ Student profile email column check: " . mysqli_error($conn);
+}
+
 // Create indexes for performance
 $indexes = array(
     "CREATE INDEX IF NOT EXISTS idx_scholarship_status ON scholarships(status)",
@@ -234,9 +242,9 @@ if($count['count'] == 0) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Database Setup - ScholarMatch</title>
+    <title>Database Setup - Scholar Match</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
-    <style>
+<style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;

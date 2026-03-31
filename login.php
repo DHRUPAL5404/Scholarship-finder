@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include "db.php";
 
@@ -52,17 +52,15 @@ if(isset($_POST['login'])){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/auth.css?v=<?php echo time(); ?>">
-    <link rel="stylesheet" href="assets/css/validation.css?v=<?php echo time(); ?>">
+    <title>Login - Scholar Match</title>
+    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
     <?php include "includes/navbar.php"; ?>
 
     <main>
-        <h2>Login to ScholarMatch</h2>
+        <h2>Login to Scholar Match</h2>
         <?php if($flash_success): ?>
             <div class="alert success"><?php echo htmlspecialchars($flash_success); ?></div>
         <?php endif; ?>

@@ -60,7 +60,7 @@ $sch = mysqli_query($conn, "SELECT * FROM scholarships ORDER BY title ASC");
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Eligibility Rule - ScholarMatch</title>
+    <title>Add Eligibility Rule - Scholar Match</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>

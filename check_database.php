@@ -49,7 +49,7 @@ $all_good = $checks['scholarships_table'] && $checks['has_category'] && $checks[
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Database Status Check - ScholarMatch</title>
+    <title>Database Status Check - Scholar Match</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
