@@ -261,7 +261,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
         </select><br><br>
 
         District:
-        <select id="district" name="district_id" required>
+        <select id="district" name="district_id">
             <option value="">Select District</option>
         </select><br><br>
 
