@@ -123,7 +123,7 @@ if (!$student) {
                         <h3>{$safe_title}</h3>
                         <p>{$safe_description}</p>
                         <p><b>Deadline:</b> {$safe_deadline}</p>
-                        <a href='apply.php?sid={$safe_sid}' class='btn'>Apply Now</a>
+                        <a href='apply_scholarship.php?id={$safe_sid}' class='btn'>Apply Now</a>
                     </div>
                     ";
                 }
