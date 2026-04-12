@@ -1,4 +1,8 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'admin') {
+    die("Unauthorized access.");
+}
 include "db.php";
 
 echo "<h2>Database Test</h2>";

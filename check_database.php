@@ -1,8 +1,12 @@
 <?php
 session_start();
-include "db.php";
 
-// Check database setup
+if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
+    header("Location: login.php");
+    exit();
+}
+
+include "db.php";
 function checkDatabaseSetup() {
     global $conn;
     
@@ -49,7 +53,7 @@ $all_good = $checks['scholarships_table'] && $checks['has_category'] && $checks[
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Database Status Check - ScholarMatch</title>
+    <title>Database Status Check - Scholar Match</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>

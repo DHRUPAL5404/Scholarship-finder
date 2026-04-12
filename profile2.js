@@ -41,23 +41,47 @@ if(isset($_POST['save_profile'])){
     $current_year     = $_POST['current_year'] ?? '';
 
     // Keep course column populated from selected course dropdowns too
-    if($education_level === 'Below 10th') {
-        $course_final = $_POST['below_10th_level'] ?? '';
-    } elseif($education_level === '10th Pass(SSC)') {
-        $course_final = $_POST['tenth_stream'] ?? '';
-    } elseif($education_level === 'Undergraduate') {
-        $course_final = $_POST['undergrad_course'] ?? '';
-    } elseif($education_level === 'Postgraduate') {
-        $course_final = $_POST['postgrad_course'] ?? '';
-    } elseif($education_level === 'PhD') {
-        $course_final = $_POST['phd_field'] ?? '';
-    } else {
-        $course_final = trim($_POST['course'] ?? '');
+    $course_final = trim($course);
+    if($course_final === '') {
+        if(!empty($_POST['undergrad_course'])) {
+            $course_final = trim($_POST['undergrad_course']);
+        } elseif(!empty($_POST['postgrad_course'])) {
+            $course_final = trim($_POST['postgrad_course']);
+        } elseif(!empty($_POST['phd_course'])) {
+            $course_final = trim($_POST['phd_course']);
+        } elseif(!empty($_POST['diploma_course'])) {
+            $course_final = trim($_POST['diploma_course']);
+        } elseif(!empty($_POST['tenth_stream'])) {
+            $course_final = trim($_POST['tenth_stream']);
+        }
     }
 
-    $education_final = $education_level; // Base level
-    if($course_final !== '') {
-        $education_final = $education_level . ' - ' . $course_final;
+    // Build education_final string
+    $education_final = $education_level;
+    if($education_level === 'Below 10th' && !empty($_POST['below_10th_level'])) {
+        $education_final = $_POST['below_10th_level'];
+    } elseif($education_level === '10th Pass(SSC)' && !empty($_POST['tenth_stream'])) {
+        $tenth_stream = $_POST['tenth_stream'];
+        if($tenth_stream === 'Diploma' && !empty($_POST['diploma_course'])) {
+            $education_final = '10th Pass - Diploma - ' . $_POST['diploma_course'];
+        } else {
+            $education_final = '10th Pass - ' . $tenth_stream;
+        }
+    } elseif($education_level === 'Undergraduate') {
+        $ustream = $_POST['undergrad_stream'] ?? '';
+        $sgroup  = $_POST['science_group'] ?? '';
+        $ucourse = $_POST['undergrad_course'] ?? '';
+        if($ustream === 'Science' && $sgroup && $ucourse) {
+            $education_final = "Undergraduate - Science - $sgroup - $ucourse";
+        } elseif($ustream && $ucourse) {
+            $education_final = "Undergraduate - $ustream - $ucourse";
+        } elseif($ustream) {
+            $education_final = "Undergraduate - $ustream";
+        }
+    } elseif($education_level === 'Postgraduate' && !empty($_POST['postgrad_course'])) {
+        $education_final = $_POST['postgrad_course'];
+    } elseif($education_level === 'PhD' && !empty($_POST['phd_course'])) {
+        $education_final = $_POST['phd_course'];
     }
 
     if($exists) {
@@ -171,53 +195,106 @@ $saved_district_id = $profile['district_id'] ?? 0;
 
         <!-- Below 10th -->
         <div id="below_10th_dropdown" style="display:none;">
-            <label>Select Class:</label>
-            <select name="below_10th_level" id="below_10th_level">
-                <option value="">Select Class</option>
-                <?php for($i=1; $i<=9; $i++): ?>
-                <option value="Std <?= $i ?>" <?= (strpos($edu,"Std $i")!==false)?'selected':'' ?>>Class <?= $i ?>th</option>
-                <?php endfor; ?>
+            <label>Select Standard:</label>
+            <select name="below_10th_level">
+                <option value="">Select Standard</option>
+                <option value="Primary School (Std 1-8)" <?= (strpos($edu,'Primary School')!==false)?'selected':'' ?>>Primary School (Std 1–8)</option>
+                <option value="Secondary School - Appearing (Std 9-10)" <?= (strpos($edu,'Secondary School')!==false)?'selected':'' ?>>Secondary School – Appearing (Std 9–10)</option>
             </select><br><br>
         </div>
 
         <!-- 10th Pass Stream -->
         <div id="tenth_stream_dropdown" style="display:none;">
             <label>Select Stream:</label>
-            <select id="tenth_stream" name="tenth_stream">
+            <select id="tenth_stream" name="tenth_stream" onchange="toggleDiplomaDropdown()">
                 <option value="">Select Stream</option>
-                <?php foreach(['Science','Commerce','Arts'] as $s): ?>
-                <option value="<?= $s ?>" <?= (strpos($edu,$s)!==false)?'selected':'' ?>><?= $s ?></option>
+                <?php foreach(['Science','Commerce','Arts','Diploma'] as $s): ?>
+                <option value="<?= $s ?>" <?= (strpos($edu,"10th Pass - $s")!==false)?'selected':'' ?>><?= $s ?></option>
                 <?php endforeach; ?>
             </select><br><br>
+            <div id="diploma_course_dropdown" style="display:none;">
+                <label>Select Diploma Course:</label>
+                <select id="diploma_course" name="diploma_course">
+                    <option value="">Select Diploma Course</option>
+                    <?php
+                    $diplomas = ['Diploma in Engineering (Polytechnic)','Diploma in Computer Engineering / IT',
+                                 'Diploma in Mechanical Engineering','Diploma in Electrical Engineering',
+                                 'Diploma in Civil Engineering','Diploma in Electronics / EC','Other'];
+                    foreach($diplomas as $d):
+                    ?>
+                    <option value="<?= $d ?>" <?= (strpos($edu,$d)!==false)?'selected':'' ?>><?= $d ?></option>
+                    <?php endforeach; ?>
+                </select><br><br>
+            </div>
         </div>
 
-        <!-- Undergraduate Course -->
-        <div id="undergrad_course_dropdown" style="display:none;">
-            <label>Select Course:</label>
-            <select id="undergrad_course" name="undergrad_course">
-                <option value="">Select Course</option>
-                <?php foreach(['B.Tech', 'B.Sc', 'B.Com', 'BBA', 'BCA', 'BA', 'B.Arch', 'Other'] as $c): ?>
-                <option value="<?= $c ?>" <?= (strpos($edu,$c)!==false)?'selected':'' ?>><?= $c ?></option>
+        <!-- Undergraduate Stream -->
+        <div id="undergrad_stream_dropdown" style="display:none;">
+            <label>Select Stream:</label>
+            <select id="undergrad_stream" name="undergrad_stream" onchange="toggleScienceGroupDropdown()">
+                <option value="">Select Stream</option>
+                <?php foreach(['Science','Commerce','Arts'] as $s): ?>
+                <option value="<?= $s ?>" <?= (strpos($edu,"Undergraduate - $s")!==false)?'selected':'' ?>><?= $s ?></option>
                 <?php endforeach; ?>
             </select><br><br>
+            <div id="science_group_dropdown" style="display:none;">
+                <label>Select Science Group:</label>
+                <select id="science_group" name="science_group" onchange="toggleTwelfthCourseDropdown()">
+                    <option value="">Select Group</option>
+                    <option value="Group A" <?= (strpos($edu,'Group A')!==false)?'selected':'' ?>>Group A (Physics, Chemistry, Mathematics)</option>
+                    <option value="Group B" <?= (strpos($edu,'Group B')!==false)?'selected':'' ?>>Group B (Physics, Chemistry, Biology)</option>
+                </select><br><br>
+            </div>
+            <div id="undergrad_course_dropdown" style="display:none;">
+                <label>Select Course:</label>
+                <select id="undergrad_course" name="undergrad_course">
+                    <option value="">Select Course</option>
+                </select><br><br>
+            </div>
         </div>
 
         <!-- Postgraduate Course -->
         <div id="postgrad_course_dropdown" style="display:none;">
-            <label>Select Course:</label>
+            <label>Select Postgraduate Course:</label>
             <select id="postgrad_course" name="postgrad_course">
                 <option value="">Select Course</option>
-                <?php foreach(['M.Tech', 'M.Sc', 'MBA', 'MCA', 'MA', 'M.Com', 'Other'] as $c): ?>
-                <option value="<?= $c ?>" <?= (strpos($edu,$c)!==false)?'selected':'' ?>><?= $c ?></option>
+                <?php
+                $pg_courses = ['M.E. / M.Tech (Engineering)','M.Sc (Science)','M.Com (Commerce)',
+                    'M.A (Arts / Humanities)','MCA (Computer Applications)',
+                    'MBA (Master of Business Administration)',"M.Voc (Vocational Master's)",
+                    'M.Ed (Education)','LLM (Law)','M.Pharm (Pharmacy)','M.Sc Nursing',
+                    'MS (Medical / Clinical)','MPH (Public Health)','MHA (Hospital Administration)',
+                    'MSW (Social Work)','M.Des (Design)','M.Phil',
+                    "Integrated Master's Program",'M.Tech (AI / ML / Data Science / Cyber Security)',
+                    'M.Sc (Data Science / AI / Analytics)','PG Diploma',
+                    "Distance / Online Master's Degree",'Other'];
+                foreach($pg_courses as $c):
+                ?>
+                <option value="<?= $c ?>" <?= ($edu===$c)?'selected':'' ?>><?= $c ?></option>
                 <?php endforeach; ?>
             </select><br><br>
         </div>
 
-        <!-- PhD Field -->
-        <div id="phd_field_input" style="display:none;">
-            <label>Field of Study:</label>
-            <input type="text" id="phd_field" name="phd_field" placeholder="Field of study"
-                value="<?= htmlspecialchars(str_replace('PhD - ', '', $edu)) ?>"><br><br>
+        <!-- PhD Course -->
+        <div id="phd_course_dropdown" style="display:none;">
+            <label>Select PhD Course:</label>
+            <select id="phd_course" name="phd_course">
+                <option value="">Select Course</option>
+                <?php
+                $phd_courses = ['PhD in Computer Science / IT','PhD in Mechanical Engineering',
+                    'PhD in Civil Engineering','PhD in Electrical Engineering',
+                    'PhD in Electronics & Communication','PhD in Chemical Engineering',
+                    'PhD in Biotechnology Engineering','PhD in Environmental Engineering',
+                    'PhD in Aerospace / Aeronautical Engineering','PhD in Data Science / AI / ML',
+                    'PhD in Mathematics','PhD in Physics','PhD in Chemistry',
+                    'PhD in Biology / Life Sciences','PhD in Environmental Science',
+                    'PhD in Economics','PhD in Management / Business Administration',
+                    'PhD in Commerce','Other'];
+                foreach($phd_courses as $c):
+                ?>
+                <option value="<?= $c ?>" <?= ($edu===$c)?'selected':'' ?>><?= $c ?></option>
+                <?php endforeach; ?>
+            </select><br><br>
         </div>
 
         <!-- Course / Year for Other -->
@@ -375,22 +452,108 @@ function loadDistricts(stateId, autoSelectDistrictId) {
 function toggleBelow10thDropdown() {
     try {
         const edu = document.getElementById('education_level').value;
+        const divs = {
+            'below_10th':    ['Below 10th'],
+            'tenth_stream':  ['10th Pass(SSC)'],
+            'undergrad_stream': ['Undergraduate'],
+            'postgrad_course':  ['Postgraduate'],
+            'phd_course':       ['PhD'],
+            'course_year':      ['Other']
+        };
 
         hide('below_10th_dropdown');
         hide('tenth_stream_dropdown');
-        hide('undergrad_course_dropdown');
+        hide('undergrad_stream_dropdown');
         hide('postgrad_course_dropdown');
-        hide('phd_field_input');
+        hide('phd_course_dropdown');
         hide('course_year_fields');
 
         if(edu === 'Below 10th')      show('below_10th_dropdown');
-        else if(edu === '10th Pass(SSC)') show('tenth_stream_dropdown');
-        else if(edu === 'Undergraduate')  show('undergrad_course_dropdown');
+        else if(edu === '10th Pass(SSC)') { show('tenth_stream_dropdown'); try{toggleDiplomaDropdown();}catch(e){} }
+        else if(edu === 'Undergraduate')  { show('undergrad_stream_dropdown'); try{toggleScienceGroupDropdown();}catch(e){} }
         else if(edu === 'Postgraduate')   show('postgrad_course_dropdown');
-        else if(edu === 'PhD')            show('phd_field_input');
+        else if(edu === 'PhD')            show('phd_course_dropdown');
         else if(edu === 'Other')          show('course_year_fields');
     } catch(e) {
         console.warn('Education dropdown error:', e);
+    }
+}
+
+function toggleDiplomaDropdown() {
+    try {
+        const val = document.getElementById('tenth_stream').value;
+        val === 'Diploma' ? show('diploma_course_dropdown') : hide('diploma_course_dropdown');
+    } catch(e) {
+        console.warn('Diploma dropdown error:', e);
+    }
+}
+
+function toggleScienceGroupDropdown() {
+    try {
+        const stream = document.getElementById('undergrad_stream').value;
+        hide('science_group_dropdown');
+        hide('undergrad_course_dropdown');
+
+        if(stream === 'Science') {
+            show('science_group_dropdown');
+            toggleTwelfthCourseDropdown();
+        } else if(stream === 'Commerce' || stream === 'Arts') {
+            show('undergrad_course_dropdown');
+            updateCoursesForStream(stream);
+        }
+    } catch(e) {
+        console.warn('Science group dropdown error:', e);
+    }
+}
+
+function toggleTwelfthCourseDropdown() {
+    try {
+        const stream = document.getElementById('undergrad_stream').value;
+        const group  = document.getElementById('science_group').value;
+        if(stream === 'Science' && group) {
+            show('undergrad_course_dropdown');
+            updateCoursesForScienceGroup(group);
+        }
+    } catch(e) {
+        console.warn('Twelfth course dropdown error:', e);
+    }
+}
+
+function updateCoursesForScienceGroup(group) {
+    try {
+        const map = {
+            'Group A': ['B.E. / B.Tech (Engineering)','BCA (Computer Applications)','B.Sc (Science)'],
+            'Group B': ['MBBS / BDS / BAMS / BHMS (Medical)','B.Sc Nursing','B.Pharm (Pharmacy)','B.Sc (Science)']
+        };
+        fillCourseSelect('undergrad_course', map[group] || []);
+    } catch(e) {
+        console.warn('Course update error:', e);
+    }
+}
+
+function updateCoursesForStream(stream) {
+    try {
+        const map = {
+            'Commerce': ['B.Com (Commerce)','BBA (Business Administration)','Hotel Management / Tourism','B.Ed (Integrated)'],
+            'Arts':     ['B.A (Arts / Humanities)','Fashion Designing / Fine Arts','LLB (Law - 5 Year)','Hotel Management / Tourism','B.Ed (Integrated)']
+        };
+        fillCourseSelect('undergrad_course', map[stream] || []);
+    } catch(e) {
+        console.warn('Stream update error:', e);
+    }
+}
+
+function fillCourseSelect(id, courses) {
+    try {
+        // Preserve previously saved value if it exists
+        const saved = document.getElementById(id).dataset.saved || '';
+        let html = '<option value="">Select Course</option>';
+        courses.forEach(c => {
+            html += `<option value="${c}" ${c === saved ? 'selected' : ''}>${c}</option>`;
+        });
+        document.getElementById(id).innerHTML = html;
+    } catch(e) {
+        console.warn('Course select error:', e);
     }
 }
 
