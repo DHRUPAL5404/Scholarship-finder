@@ -1,0 +1,257 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <p:cSld>
+    <p:bg>
+      <p:bgPr>
+        <a:solidFill>
+          <a:srgbClr val="1A2935" />
+        </a:solidFill>
+      </p:bgPr>
+    </p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name="" />
+        <p:cNvGrpSpPr />
+        <p:nvPr />
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0" />
+          <a:ext cx="0" cy="0" />
+          <a:chOff x="0" y="0" />
+          <a:chExt cx="0" cy="0" />
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr name="TextBox 2" id="2" />
+          <p:cNvSpPr txBox="true" />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm rot="0">
+            <a:off x="646619" y="575654" />
+            <a:ext cx="8324850" cy="2114550" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="t" rtlCol="false" tIns="0" lIns="0" bIns="0" rIns="0">
+            <a:spAutoFit />
+          </a:bodyPr>
+          <a:lstStyle />
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="8399" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="6999" spc="-139">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Project Objective Overview</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr name="TextBox 3" id="3" />
+          <p:cNvSpPr txBox="true" />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm rot="0">
+            <a:off x="2670320" y="3190866" />
+            <a:ext cx="13951391" cy="6692675" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="t" rtlCol="false" tIns="0" lIns="0" bIns="0" rIns="0">
+            <a:spAutoFit />
+          </a:bodyPr>
+          <a:lstStyle />
+          <a:p>
+            <a:pPr algn="l">
+              <a:lnSpc>
+                <a:spcPts val="4197" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2998">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Project Objective Overview</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="581606" indent="-290803" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="3771" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2693">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Develop ScholarMatch, a web-based platform to connect students with suitable scholarships.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="647315" indent="-323658" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="4197" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2998">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Simplify the scholarship process: discover, compare, and apply from one place.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="647315" indent="-323658" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="4197" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2998">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Provide a secure and user-friendly system for both students and admin.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="647315" indent="-323658" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="4197" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2998">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Reduce manual effort and errors through structured database management and validations.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="647315" indent="-323658" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="4197" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2998">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Improve transparency by showing clear scholarship details, eligibility, and application status.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="4197" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2998">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>
+              </a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="4197" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="2998">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>
+              </a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping />
+  </p:clrMapOvr>
+</p:sld>
