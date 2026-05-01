@@ -33,6 +33,7 @@ if(!$has_profile){
 $search        = trim($_GET['search']   ?? '');
 $filter_expiry = trim($_GET['expiry']   ?? '');   // 'soon' | 'open'
 
+
 // ── Check scholarships table exists ──────────────────────────────────────────
 $setup_needed = !mysqli_query($conn, "SELECT 1 FROM scholarships LIMIT 1");
 
@@ -153,6 +154,8 @@ foreach($all_scholarships as $s){
 
     $enriched[] = $s;
 }
+
+
 
 // Sort: eligible first, then by days_left ASC
 usort($enriched, function($a,$b){
@@ -454,9 +457,13 @@ function badge_color(int $pct): string {
                 <option value="open"  <?= $filter_expiry==='open'  ? 'selected':'' ?>>✅ Still Open</option>
             </select>
             <button type="submit" id="dash-filter-btn">Filter</button>
+
+
             <?php if($search !== '' || $filter_expiry !== ''): ?>
                 <a href="student_dashboard.php" class="clear-btn" id="dash-clear-btn">✕ Clear</a>
             <?php endif; ?>
+
+
         </div>
     </form>
 
