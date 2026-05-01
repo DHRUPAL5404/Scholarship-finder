@@ -148,6 +148,9 @@ foreach($all_scholarships as $s){
     if($filter_expiry === 'soon' && ($days_left === null || $days_left > 7 || $days_left < 0)) continue;
     if($filter_expiry === 'open' && $days_left !== null && $days_left < 0) continue;
 
+    // ── ONLY SHOW 100% MATCHES ──
+    if($elig['percent'] < 100) continue;
+
     $enriched[] = $s;
 }
 
@@ -384,7 +387,6 @@ function badge_color(int $pct): string {
         </div>
         <div class="header-actions">
             <a href="profile.php" id="update-profile-link">✏ Profile</a>
-            <a href="my_applications.php" id="my-apps-link">📋 My Applications</a>
             <a href="logout.php" class="logout" id="logout-link">Logout</a>
         </div>
     </div>
@@ -564,11 +566,6 @@ function badge_color(int $pct): string {
                 <a href="scholarship_details.php?id=<?= intval($sch['scholarship_id']) ?>"
                    class="btn-details"
                    id="details-<?= intval($sch['scholarship_id']) ?>">View Details</a>
-                <?php if($is_elig && !$expired): ?>
-                <a href="apply_scholarship.php?id=<?= intval($sch['scholarship_id']) ?>"
-                   class="btn-apply"
-                   id="apply-<?= intval($sch['scholarship_id']) ?>">Apply Now →</a>
-                <?php endif; ?>
             </div>
         </div>
         <?php endforeach; ?>
@@ -602,205 +599,7 @@ function badge_color(int $pct): string {
 <?php include "includes/footer.php"; ?>
 <script src="assets/js/validation.js?v=<?php echo time(); ?>"></script>
 
-<!-- ── Floating Chat Widget ── -->
-<div id="chat-widget" class="chat-widget">
-    <div class="chat-header">
-        <strong>ScholarMatch Assistant</strong>
-        <button id="chat-close-btn">&times;</button>
-    </div>
-    <div id="chat-messages" class="chat-messages">
-        <div class="chat-message bot">Hello! I'm your AI assistant. How can I help you with scholarships today?</div>
-    </div>
-    <div class="chat-input-area">
-        <input type="text" id="chat-input" placeholder="Ask a question..." autocomplete="off">
-        <button id="chat-send-btn">Send</button>
-    </div>
-</div>
 
-<button id="chat-toggle-btn" class="chat-toggle-btn">💬 Chat</button>
-
-<style>
-    .chat-toggle-btn {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border: none;
-        border-radius: 30px;
-        padding: 12px 20px;
-        font-size: 1rem;
-        font-weight: bold;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        z-index: 1000;
-        transition: transform 0.2s;
-    }
-    .chat-toggle-btn:hover { transform: translateY(-2px); }
-    
-    .chat-widget {
-        position: fixed;
-        bottom: 80px;
-        right: 20px;
-        width: 320px;
-        height: 400px;
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-        display: none;
-        flex-direction: column;
-        z-index: 1000;
-        border: 1px solid #e5e7eb;
-        overflow: hidden;
-    }
-    .chat-header {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        padding: 12px 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: bold;
-    }
-    .chat-header button {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 1.5rem;
-        cursor: pointer;
-        line-height: 1;
-    }
-    .chat-messages {
-        flex: 1;
-        padding: 15px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        background: #f8fafc;
-    }
-    .chat-message {
-        max-width: 80%;
-        padding: 8px 12px;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        line-height: 1.4;
-    }
-    .chat-message.bot {
-        background: #e2e8f0;
-        color: #334155;
-        align-self: flex-start;
-        border-bottom-left-radius: 2px;
-    }
-    .chat-message.user {
-        background: #667eea;
-        color: white;
-        align-self: flex-end;
-        border-bottom-right-radius: 2px;
-    }
-    .chat-message.loading {
-        background: transparent;
-        color: #888;
-        font-style: italic;
-    }
-    .chat-input-area {
-        display: flex;
-        padding: 10px;
-        border-top: 1px solid #e5e7eb;
-        background: #fff;
-    }
-    .chat-input-area input {
-        flex: 1;
-        padding: 8px 12px;
-        border: 1px solid #ccc;
-        border-radius: 20px;
-        outline: none;
-        font-size: 0.9rem;
-    }
-    .chat-input-area button {
-        background: #667eea;
-        color: white;
-        border: none;
-        padding: 8px 15px;
-        margin-left: 8px;
-        border-radius: 20px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-</style>
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const chatToggle = document.getElementById('chat-toggle-btn');
-    const chatWidget = document.getElementById('chat-widget');
-    const chatClose = document.getElementById('chat-close-btn');
-    const chatInput = document.getElementById('chat-input');
-    const chatSend = document.getElementById('chat-send-btn');
-    const chatMessages = document.getElementById('chat-messages');
-
-    chatToggle.addEventListener('click', () => {
-        chatWidget.style.display = chatWidget.style.display === 'flex' ? 'none' : 'flex';
-        if (chatWidget.style.display === 'flex') chatInput.focus();
-    });
-
-    chatClose.addEventListener('click', () => {
-        chatWidget.style.display = 'none';
-    });
-
-    function appendMessage(text, sender, className = '') {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `chat-message ${sender} ${className}`;
-        msgDiv.innerHTML = text; // Server sends escaped HTML
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-        return msgDiv;
-    }
-
-    function escapeHtml(unsafe) {
-        return unsafe
-             .replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
-    }
-
-    async function sendMessage() {
-        const message = chatInput.value.trim();
-        if (!message) return;
-
-        appendMessage(escapeHtml(message), 'user');
-        chatInput.value = '';
-        
-        const loadingMsg = appendMessage('Claude is thinking...', 'bot', 'loading');
-
-        try {
-            const response = await fetch('chat_proxy.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message })
-            });
-            const data = await response.json();
-            
-            loadingMsg.remove();
-            
-            if (data.reply) {
-                appendMessage(data.reply.replace(/\n/g, '<br>'), 'bot');
-            } else if (data.error) {
-                appendMessage('Error: ' + data.error, 'bot');
-            }
-        } catch (err) {
-            loadingMsg.remove();
-            appendMessage('Connection error. Please try again.', 'bot');
-        }
-    }
-
-    chatSend.addEventListener('click', sendMessage);
-    chatInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
-});
-</script>
 
 </body>
 </html>

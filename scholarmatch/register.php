@@ -102,7 +102,7 @@ if(isset($_POST['register'])){
 
                         // ── Insert new user ────────────────────────────────
                         $role = 'student';
-                        $stmt = $conn->prepare("INSERT INTO users (full_name, email, mobile, password, role) VALUES (?, ?, ?, ?, ?)");
+                        $stmt = $conn->prepare("INSERT INTO users (name, email, mobile, password, role) VALUES (?, ?, ?, ?, ?)");
                         if(!$stmt){
                             $register_error = "Database error. Please try again later.";
                         } else {

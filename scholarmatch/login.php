@@ -24,7 +24,7 @@ if(isset($_POST['login'])){
     } else {
 
         // ── Prepared statement login query ─────────────────────────────────
-        $stmt = $conn->prepare("SELECT user_id, full_name, password, role FROM users WHERE email = ?");
+        $stmt = $conn->prepare("SELECT user_id, name, password, role FROM users WHERE email = ?");
         if (!$stmt) {
             $login_error = "Database error. Please try again later.";
         } else {
@@ -40,7 +40,7 @@ if(isset($_POST['login'])){
                     session_regenerate_id(true);
 
                     $_SESSION['user_id']   = $row['user_id'];
-                    $_SESSION['user_name'] = $row['full_name'];
+                    $_SESSION['user_name'] = $row['name'];
                     $_SESSION['role']      = $row['role'];
                     $_SESSION['flash_success'] = "Login successful.";
 
