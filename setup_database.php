@@ -42,6 +42,7 @@ $scholarships_table = "CREATE TABLE IF NOT EXISTS scholarships (
     education_level VARCHAR(255) DEFAULT '',
     min_marks DECIMAL(5,2) DEFAULT 0,
     max_family_income INT DEFAULT 0,
+    max_applicants INT DEFAULT 0,
     state_id INT DEFAULT NULL,
     start_date DATE DEFAULT NULL,
     end_date DATE DEFAULT NULL,
@@ -74,6 +75,7 @@ $student_profile_table = "CREATE TABLE IF NOT EXISTS student_profile (
     parent_contact VARCHAR(20),
     course VARCHAR(255),
     current_year VARCHAR(50),
+    uploaded_doc VARCHAR(255),
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
@@ -161,12 +163,28 @@ if(mysqli_query($conn, $alter_table)) {
     $results[] = "⚠ Category column check: " . mysqli_error($conn);
 }
 
+// Add max_applicants column
+$alter_table_max = "ALTER TABLE scholarships ADD COLUMN IF NOT EXISTS max_applicants INT DEFAULT 0 AFTER amount";
+if(mysqli_query($conn, $alter_table_max)) {
+    $results[] = "✓ max_applicants column verified";
+} else {
+    $results[] = "⚠ max_applicants column check: " . mysqli_error($conn);
+}
+
 // Check student_profile table structure and add missing email column
 $alter_profile_email = "ALTER TABLE student_profile ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER full_name";
 if(mysqli_query($conn, $alter_profile_email)) {
     $results[] = "✓ Student profile email column verified";
 } else {
     $results[] = "⚠ Student profile email column check: " . mysqli_error($conn);
+}
+
+// Check student_profile table structure and add missing uploaded_doc column
+$alter_profile_doc = "ALTER TABLE student_profile ADD COLUMN IF NOT EXISTS uploaded_doc VARCHAR(255) AFTER current_year";
+if(mysqli_query($conn, $alter_profile_doc)) {
+    $results[] = "✓ Student profile uploaded_doc column verified";
+} else {
+    $results[] = "⚠ Student profile uploaded_doc column check: " . mysqli_error($conn);
 }
 
 // Create indexes for performance

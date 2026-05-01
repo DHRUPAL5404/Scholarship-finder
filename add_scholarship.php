@@ -35,6 +35,8 @@ if(isset($_POST['add'])){
     // ── Collect & sanitise inputs ──────────────────────────────────────────
     $title      = trim($_POST['title']       ?? '');
     $desc       = trim($_POST['description'] ?? '');
+    $amount     = intval($_POST['amount'] ?? 0);
+    $max_applicants = intval($_POST['max_applicants'] ?? 0);
     $start_date = trim($_POST['start_date']  ?? '');
     $end_date   = trim($_POST['end_date']    ?? '');
 
@@ -51,6 +53,14 @@ if(isset($_POST['add'])){
         $errors[] = "Description is required.";
     } elseif(strlen($desc) < 20){
         $errors[] = "Description must be at least 20 characters.";
+    }
+
+    if($amount <= 0){
+        $errors[] = "Amount must be greater than 0.";
+    }
+
+    if($max_applicants <= 0){
+        $errors[] = "Max applicants must be greater than 0.";
     }
 
     if(empty($start_date)){
@@ -81,14 +91,14 @@ if(isset($_POST['add'])){
     $deadline = $end_date;
 
     $stmt = $conn->prepare(
-        "INSERT INTO scholarships (title, description, start_date, end_date, deadline, status)
-         VALUES (?, ?, ?, ?, ?, ?)"
+        "INSERT INTO scholarships (title, description, amount, max_applicants, start_date, end_date, deadline, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     );
 
     if(!$stmt){
         $_SESSION['flash_error'] = "Database error. Please try again later.";
     } else {
-        $stmt->bind_param("ssssss", $title, $desc, $start_date, $end_date, $deadline, $status);
+        $stmt->bind_param("ssiissss", $title, $desc, $amount, $max_applicants, $start_date, $end_date, $deadline, $status);
 
         if($stmt->execute()){
             $_SESSION['flash_success'] = "Scholarship \"" . htmlspecialchars($title) . "\" added successfully.";
@@ -141,6 +151,18 @@ if(isset($_POST['add'])){
                 <textarea name="description" id="sch-description"
                           placeholder="Describe the scholarship criteria and benefits (min 20 characters)"
                           rows="5" required minlength="20"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
+            </div>
+
+            <div class="input-wrapper">
+                <label for="sch-amount">Amount (₹) <span style="color:red">*</span></label>
+                <input type="number" name="amount" id="sch-amount" placeholder="e.g. 50000" required min="1"
+                       value="<?php echo htmlspecialchars($_POST['amount'] ?? ''); ?>">
+            </div>
+
+            <div class="input-wrapper">
+                <label for="sch-max">Max Applicants <span style="color:red">*</span></label>
+                <input type="number" name="max_applicants" id="sch-max" placeholder="e.g. 100" required min="1"
+                       value="<?php echo htmlspecialchars($_POST['max_applicants'] ?? ''); ?>">
             </div>
 
             <div class="input-wrapper">

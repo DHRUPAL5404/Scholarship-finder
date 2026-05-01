@@ -60,42 +60,85 @@ if(isset($_POST['save_profile'])){
         $education_final = $education_level . ' - ' . $course_final;
     }
 
-    if($exists) {
-        $stmt = $conn->prepare("UPDATE student_profile SET
-            full_name=?, email=?, education_level=?, marks=?, family_income=?,
-            category=?, gender=?, state_id=?, district_id=?, institution_type=?,
-            age=?, disability_type=?, disability_percent=?, minority_status=?,
-            parent_name=?, parent_occupation=?, parent_contact=?, course=?, current_year=?
-            WHERE user_id=?");
-        $stmt->bind_param("sssiissiisisissssssi",
-            $full_name, $email, $education_final, $marks, $family_income,
-            $category, $gender, $state_id, $district_id, $institution_type,
-            $age, $disability_type, $disability_percent, $minority_status,
-            $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year,
-            $user_id);
-    } else {
-        $stmt = $conn->prepare("INSERT INTO student_profile
-            (user_id, full_name, email, education_level, marks, family_income,
-             category, gender, state_id, district_id, institution_type, age,
-             disability_type, disability_percent, minority_status,
-             parent_name, parent_occupation, parent_contact, course, current_year)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("isssiissiisisisssssss",
-            $user_id, $full_name, $email, $education_final, $marks, $family_income,
-            $category, $gender, $state_id, $district_id, $institution_type, $age,
-            $disability_type, $disability_percent, $minority_status,
-            $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year);
+    // File upload logic
+    $uploaded_doc_path = null;
+    if ($exists) {
+        // Fetch current doc to keep it if not replaced
+        $doc_stmt = $conn->prepare("SELECT uploaded_doc FROM student_profile WHERE user_id = ?");
+        $doc_stmt->bind_param("i", $user_id);
+        $doc_stmt->execute();
+        $doc_res = $doc_stmt->get_result()->fetch_assoc();
+        $uploaded_doc_path = $doc_res['uploaded_doc'] ?? null;
+        $doc_stmt->close();
     }
 
-    if($stmt->execute()) {
-        error_log("Profile saved successfully for user_id: $user_id"); // Log success
-        header("Location: student_dashboard.php");
-        exit();
-    } else {
-        $error_message = "Database Error: " . $stmt->error . " (SQLSTATE: " . $stmt->sqlstate . ")";
-        error_log("Profile save FAILED for user_id: $user_id - " . $stmt->error); // Log failure
+    if (isset($_FILES['document']) && $_FILES['document']['error'] === UPLOAD_ERR_OK) {
+        $file_tmp = $_FILES['document']['tmp_name'];
+        $file_name = $_FILES['document']['name'];
+        $file_size = $_FILES['document']['size'];
+        $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+        
+        $allowed_exts = ['pdf', 'jpg', 'jpeg', 'png'];
+        $max_size = 2 * 1024 * 1024; // 2MB
+        
+        if (in_array($file_ext, $allowed_exts) && $file_size <= $max_size) {
+            $upload_dir = 'assets/uploads/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
+            $new_file_name = 'doc_' . $user_id . '_' . time() . '.' . $file_ext;
+            $destination = $upload_dir . $new_file_name;
+            
+            if (move_uploaded_file($file_tmp, $destination)) {
+                $uploaded_doc_path = $destination;
+            } else {
+                $error_message = "Failed to upload document.";
+            }
+        } else {
+            $error_message = "Invalid document. Max size: 2MB. Allowed types: PDF, JPG, PNG.";
+        }
     }
-    $stmt->close();
+
+    if (empty($error_message)) {
+
+
+        if($exists) {
+            $stmt = $conn->prepare("UPDATE student_profile SET
+                full_name=?, email=?, education_level=?, marks=?, family_income=?,
+                category=?, gender=?, state_id=?, district_id=?, institution_type=?,
+                age=?, disability_type=?, disability_percent=?, minority_status=?,
+                parent_name=?, parent_occupation=?, parent_contact=?, course=?, current_year=?, uploaded_doc=?
+                WHERE user_id=?");
+            $stmt->bind_param("sssiissiisisissssssss",
+                $full_name, $email, $education_final, $marks, $family_income,
+                $category, $gender, $state_id, $district_id, $institution_type,
+                $age, $disability_type, $disability_percent, $minority_status,
+                $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year, $uploaded_doc_path,
+                $user_id);
+        } else {
+            $stmt = $conn->prepare("INSERT INTO student_profile
+                (user_id, full_name, email, education_level, marks, family_income,
+                 category, gender, state_id, district_id, institution_type, age,
+                 disability_type, disability_percent, minority_status,
+                 parent_name, parent_occupation, parent_contact, course, current_year, uploaded_doc)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmt->bind_param("isssiissiisisissssssss",
+                $user_id, $full_name, $email, $education_final, $marks, $family_income,
+                $category, $gender, $state_id, $district_id, $institution_type, $age,
+                $disability_type, $disability_percent, $minority_status,
+                $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year, $uploaded_doc_path);
+        }
+
+        if($stmt->execute()) {
+            error_log("Profile saved successfully for user_id: $user_id"); // Log success
+            header("Location: student_dashboard.php");
+            exit();
+        } else {
+            $error_message = "Database Error: " . $stmt->error . " (SQLSTATE: " . $stmt->sqlstate . ")";
+            error_log("Profile save FAILED for user_id: $user_id - " . $stmt->error); // Log failure
+        }
+        $stmt->close();
+    }
 }
 
 
@@ -145,7 +188,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
     </div>
     <?php endif; ?>
 
-    <form method="post" action="profile.php" class="profile-form">
+    <form method="post" action="profile.php" class="profile-form" enctype="multipart/form-data">
 
         Full Name:
         <input type="text" name="full_name" placeholder="Full Name"
@@ -312,6 +355,15 @@ $saved_district_id = $profile['district_id'] ?? 0;
         Parent / Guardian Contact:
         <input type="tel" name="parent_contact" placeholder="Mobile / Phone"
             value="<?= htmlspecialchars($profile['parent_contact'] ?? '') ?>"><br><br>
+
+        Document Upload (Marksheet/Income/Caste):
+        <?php if(!empty($profile['uploaded_doc'])): ?>
+            <div style="margin-bottom: 10px; padding: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 5px;">
+                ✅ Current Document: <a href="<?= htmlspecialchars($profile['uploaded_doc']) ?>" target="_blank" style="color: #166534; font-weight: bold; text-decoration: underline;">View File</a>
+            </div>
+        <?php endif; ?>
+        <input type="file" name="document" accept=".pdf, .jpg, .jpeg, .png"><br>
+        <small style="color: #666;">Max 2MB. Allowed types: PDF, JPG, PNG.</small><br><br>
 
         <button type="submit" name="save_profile" value="1">
             <?= $is_edit ? '?? Update Profile' : '? Save Profile' ?>

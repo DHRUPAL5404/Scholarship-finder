@@ -201,36 +201,82 @@ function badge_color(int $pct): string {
         .dash-header { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:1rem; margin-bottom:1.5rem; }
         .dash-header h1 { margin:0; font-size:1.6rem; }
         .dash-header p  { margin:.2rem 0 0; color:#888; font-size:.95rem; }
-        .header-actions { display:flex; gap:.6rem; flex-wrap:wrap; }
-        .header-actions a { padding:.45rem 1rem; border-radius:6px; font-size:.88rem; text-decoration:none;
-                            background:#f0f0f0; color:#333; border:1px solid #ddd; }
-        .header-actions a:hover { background:#e0e0e0; }
-        .header-actions a.logout { background:#fee2e2; color:#b91c1c; border-color:#fca5a5; }
+        .header-actions { display:flex; gap:.7rem; flex-wrap:wrap; }
+        .header-actions a { 
+            padding:.55rem 1.15rem; border-radius:8px; font-size:.9rem; text-decoration:none;
+            background:#f9fafb; color:#374151; border:1.5px solid #e5e7eb; 
+            font-weight:500; transition:all .25s ease;
+            box-shadow:0 1px 2px rgba(0,0,0,.05);
+        }
+        .header-actions a:hover { 
+            background:#f3f4f6; border-color:#d1d5db; 
+            box-shadow:0 2px 4px rgba(0,0,0,.08);
+            transform:translateY(-1px);
+        }
+        .header-actions a.logout { 
+            background:#fee2e2; color:#991b1b; border-color:#fecaca;
+        }
+        .header-actions a.logout:hover {
+            background:#fecaca; border-color:#f87171;
+        }
 
         /* ── Filter bar ── */
-        .filter-bar { display:flex; gap:.7rem; flex-wrap:wrap; align-items:center; margin-bottom:1.25rem; }
+        .filter-bar { display:flex; gap:.9rem; flex-wrap:wrap; align-items:center; margin-bottom:1.5rem; }
         .filter-bar input[type="text"] {
-            flex:1; min-width:210px; padding:.55rem .9rem;
-            border:1px solid #ccc; border-radius:8px; font-size:.95rem;
+            flex:1; min-width:240px; padding:.65rem 1rem;
+            border:1.5px solid #e5e7eb; border-radius:10px; font-size:.95rem;
+            transition:all .3s ease;
         }
-        .filter-bar select { padding:.55rem .9rem; border:1px solid #ccc; border-radius:8px; font-size:.95rem; }
-        .filter-bar button { padding:.55rem 1.2rem; border-radius:8px; font-size:.95rem; cursor:pointer; }
-        .filter-bar a.clear-btn { padding:.5rem .9rem; border:1px solid #ccc; border-radius:8px;
-                                   font-size:.88rem; color:#555; background:#f5f5f5; text-decoration:none; }
-        .filter-bar a.clear-btn:hover { background:#e0e0e0; }
+        .filter-bar input[type="text"]:focus {
+            outline:none;
+            border-color:#667eea;
+            box-shadow:0 0 0 3px rgba(102,126,234,.08);
+        }
+        .filter-bar select { 
+            padding:.65rem 1rem; border:1.5px solid #e5e7eb; border-radius:10px; font-size:.95rem;
+            transition:all .3s ease;
+        }
+        .filter-bar select:focus {
+            outline:none;
+            border-color:#667eea;
+            box-shadow:0 0 0 3px rgba(102,126,234,.08);
+        }
+        .filter-bar button { 
+            padding:.65rem 1.5rem; border-radius:10px; font-size:.95rem; cursor:pointer;
+            background:#667eea; color:#fff; border:none; font-weight:600;
+            transition:all .3s ease; box-shadow:0 2px 6px rgba(102,126,234,.3);
+        }
+        .filter-bar button:hover {
+            background:#5568d3;
+            box-shadow:0 4px 12px rgba(102,126,234,.4);
+            transform:translateY(-1px);
+        }
+        .filter-bar a.clear-btn { 
+            padding:.6rem 1rem; border:1.5px solid #e5e7eb; border-radius:10px;
+            font-size:.9rem; color:#666; background:#f9fafb; text-decoration:none;
+            font-weight:500; transition:all .3s ease;
+        }
+        .filter-bar a.clear-btn:hover { 
+            background:#f3f4f6; border-color:#d1d5db;
+            transform:translateY(-1px);
+        }
 
         /* ── Scholarship grid ── */
         .scholarships-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(310px,1fr)); gap:1.25rem; }
 
         /* ── Scholarship card ── */
         .scholarship-card {
-            background:#fff; border:1px solid #e5e7eb; border-radius:14px;
-            box-shadow:0 2px 8px rgba(0,0,0,.07); display:flex; flex-direction:column;
-            overflow:hidden; transition:transform .2s,box-shadow .2s;
+            background:#fff; border:1.5px solid #e5e7eb; border-radius:16px;
+            box-shadow:0 2px 8px rgba(0,0,0,.06); display:flex; flex-direction:column;
+            overflow:hidden; transition:all .3s ease;
         }
-        .scholarship-card:hover { transform:translateY(-3px); box-shadow:0 6px 18px rgba(0,0,0,.12); }
-        .scholarship-card.eligible   { border-top:4px solid #22c55e; }
-        .scholarship-card.not_eligible{ border-top:4px solid #f87171; }
+        .scholarship-card:hover { 
+            transform:translateY(-4px); 
+            box-shadow:0 8px 20px rgba(0,0,0,.12);
+            border-color:#d1d5db;
+        }
+        .scholarship-card.eligible   { border-top:5px solid #22c55e; }
+        .scholarship-card.not_eligible{ border-top:5px solid #ef4444; }
 
         .card-header { padding:1rem 1.1rem .6rem; }
         .card-header h3 { margin:0; font-size:1.05rem; line-height:1.35; }
@@ -240,27 +286,30 @@ function badge_color(int $pct): string {
 
         /* ── Eligibility % badge ── */
         .eligibility-badge {
-            display:inline-flex; align-items:center; gap:.4rem;
-            padding:.3rem .7rem; border-radius:20px; font-size:.82rem;
-            font-weight:700; color:#fff; margin-bottom:.65rem;
+            display:inline-flex; align-items:center; gap:.5rem;
+            padding:.4rem .85rem; border-radius:22px; font-size:.85rem;
+            font-weight:700; color:#fff; margin-bottom:.75rem;
+            box-shadow:0 2px 8px rgba(0,0,0,.12);
         }
         .badge-ring {
-            width:36px; height:36px; border-radius:50%; display:flex;
+            width:42px; height:42px; border-radius:50%; display:flex;
             align-items:center; justify-content:center;
-            font-size:.78rem; font-weight:800; color:#fff;
-            flex-shrink:0;
+            font-size:.8rem; font-weight:800; color:#fff;
+            flex-shrink:0; box-shadow:0 2px 6px rgba(0,0,0,.15);
         }
 
         /* ── Deadline countdown ── */
         .deadline-strip {
-            display:flex; align-items:center; gap:.5rem;
-            padding:.42rem .75rem; border-radius:8px;
-            background:#f8fafc; border:1px solid #e2e8f0;
-            font-size:.84rem; margin-bottom:.6rem;
+            display:flex; align-items:center; gap:.65rem;
+            padding:.5rem .85rem; border-radius:10px;
+            background:linear-gradient(135deg,#f8fafc,#f1f5f9); border:1.5px solid #e2e8f0;
+            font-size:.87rem; margin-bottom:.75rem;
+            font-weight:500;
         }
         .deadline-strip .days-badge {
-            padding:.18rem .55rem; border-radius:10px;
-            font-weight:700; font-size:.8rem; color:#fff;
+            padding:.22rem .7rem; border-radius:12px;
+            font-weight:700; font-size:.82rem; color:#fff;
+            box-shadow:0 2px 4px rgba(0,0,0,.1);
         }
         .deadline-strip .days-badge.urgent { background:#ef4444; animation:pulse 1.5s infinite; }
         .deadline-strip .days-badge.warning{ background:#f59e0b; }
@@ -274,31 +323,47 @@ function badge_color(int $pct): string {
         .issues-list ul { margin:.2rem 0 0 1rem; padding:0; }
 
         /* ── Card footer / buttons ── */
-        .card-footer { padding:.75rem 1.1rem; border-top:1px solid #f0f0f0;
-                       display:flex; gap:.6rem; flex-wrap:wrap; }
+        .card-footer { padding:.85rem 1.1rem; border-top:1px solid #f3f4f6;
+                       display:flex; gap:.7rem; flex-wrap:wrap; }
         .btn-details {
-            flex:1; text-align:center; padding:.45rem .7rem; border-radius:7px;
-            background:#f3f4f6; color:#374151; font-size:.85rem; text-decoration:none;
-            border:1px solid #d1d5db; font-weight:600;
+            flex:1; text-align:center; padding:.52rem .8rem; border-radius:9px;
+            background:#f9fafb; color:#374151; font-size:.88rem; text-decoration:none;
+            border:1.5px solid #e5e7eb; font-weight:600;
+            transition:all .25s ease;
         }
-        .btn-details:hover { background:#e5e7eb; }
+        .btn-details:hover { 
+            background:#f3f4f6; border-color:#d1d5db;
+            transform:translateY(-1px);
+            box-shadow:0 2px 4px rgba(0,0,0,.06);
+        }
         .btn-apply {
-            flex:1; text-align:center; padding:.45rem .7rem; border-radius:7px;
+            flex:1; text-align:center; padding:.52rem .8rem; border-radius:9px;
             background:linear-gradient(135deg,#667eea,#764ba2);
-            color:#fff; font-size:.85rem; text-decoration:none; font-weight:700;
-            border:none; box-shadow:0 2px 6px rgba(102,126,234,.4);
+            color:#fff; font-size:.88rem; text-decoration:none; font-weight:700;
+            border:none; box-shadow:0 2px 8px rgba(102,126,234,.35);
+            transition:all .25s ease;
         }
-        .btn-apply:hover { opacity:.9; }
+        .btn-apply:hover { 
+            opacity:.95;
+            box-shadow:0 4px 12px rgba(102,126,234,.45);
+            transform:translateY(-1px);
+        }
 
         /* ── Stats row ── */
-        .stats-row { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1.5rem; }
+        .stats-row { display:flex; gap:1.25rem; flex-wrap:wrap; margin-bottom:1.75rem; }
         .stat-card {
-            flex:1; min-width:140px; background:#fff; border:1px solid #e5e7eb;
-            border-radius:12px; padding:.9rem 1.1rem; text-align:center;
-            box-shadow:0 1px 4px rgba(0,0,0,.06);
+            flex:1; min-width:160px; background:#fff; border:1.5px solid #e5e7eb;
+            border-radius:14px; padding:1.15rem 1.25rem; text-align:center;
+            box-shadow:0 2px 6px rgba(0,0,0,.08);
+            transition:all .3s ease;
         }
-        .stat-card .stat-num { font-size:1.8rem; font-weight:800; line-height:1; }
-        .stat-card .stat-label { font-size:.8rem; color:#888; margin-top:.3rem; }
+        .stat-card:hover {
+            border-color:#d1d5db;
+            box-shadow:0 4px 12px rgba(0,0,0,.12);
+            transform:translateY(-2px);
+        }
+        .stat-card .stat-num { font-size:2rem; font-weight:800; line-height:1; margin-bottom:.4rem; }
+        .stat-card .stat-label { font-size:.82rem; color:#666; margin-top:.5rem; font-weight:500; }
 
         /* ── No results ── */
         .no-scholarships { text-align:center; padding:3rem 1rem; color:#9ca3af; font-size:1rem; }
@@ -319,7 +384,7 @@ function badge_color(int $pct): string {
         </div>
         <div class="header-actions">
             <a href="profile.php" id="update-profile-link">✏ Profile</a>
-            <a href="check_eligibility.php" id="check-eligibility-link">🎯 Check Eligibility</a>
+            <a href="my_applications.php" id="my-apps-link">📋 My Applications</a>
             <a href="logout.php" class="logout" id="logout-link">Logout</a>
         </div>
     </div>
@@ -536,5 +601,206 @@ function badge_color(int $pct): string {
 
 <?php include "includes/footer.php"; ?>
 <script src="assets/js/validation.js?v=<?php echo time(); ?>"></script>
+
+<!-- ── Floating Chat Widget ── -->
+<div id="chat-widget" class="chat-widget">
+    <div class="chat-header">
+        <strong>ScholarMatch Assistant</strong>
+        <button id="chat-close-btn">&times;</button>
+    </div>
+    <div id="chat-messages" class="chat-messages">
+        <div class="chat-message bot">Hello! I'm your AI assistant. How can I help you with scholarships today?</div>
+    </div>
+    <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ask a question..." autocomplete="off">
+        <button id="chat-send-btn">Send</button>
+    </div>
+</div>
+
+<button id="chat-toggle-btn" class="chat-toggle-btn">💬 Chat</button>
+
+<style>
+    .chat-toggle-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border: none;
+        border-radius: 30px;
+        padding: 12px 20px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        z-index: 1000;
+        transition: transform 0.2s;
+    }
+    .chat-toggle-btn:hover { transform: translateY(-2px); }
+    
+    .chat-widget {
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 320px;
+        height: 400px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        display: none;
+        flex-direction: column;
+        z-index: 1000;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+    .chat-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 12px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: bold;
+    }
+    .chat-header button {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        line-height: 1;
+    }
+    .chat-messages {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: #f8fafc;
+    }
+    .chat-message {
+        max-width: 80%;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+    .chat-message.bot {
+        background: #e2e8f0;
+        color: #334155;
+        align-self: flex-start;
+        border-bottom-left-radius: 2px;
+    }
+    .chat-message.user {
+        background: #667eea;
+        color: white;
+        align-self: flex-end;
+        border-bottom-right-radius: 2px;
+    }
+    .chat-message.loading {
+        background: transparent;
+        color: #888;
+        font-style: italic;
+    }
+    .chat-input-area {
+        display: flex;
+        padding: 10px;
+        border-top: 1px solid #e5e7eb;
+        background: #fff;
+    }
+    .chat-input-area input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 20px;
+        outline: none;
+        font-size: 0.9rem;
+    }
+    .chat-input-area button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        margin-left: 8px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const chatToggle = document.getElementById('chat-toggle-btn');
+    const chatWidget = document.getElementById('chat-widget');
+    const chatClose = document.getElementById('chat-close-btn');
+    const chatInput = document.getElementById('chat-input');
+    const chatSend = document.getElementById('chat-send-btn');
+    const chatMessages = document.getElementById('chat-messages');
+
+    chatToggle.addEventListener('click', () => {
+        chatWidget.style.display = chatWidget.style.display === 'flex' ? 'none' : 'flex';
+        if (chatWidget.style.display === 'flex') chatInput.focus();
+    });
+
+    chatClose.addEventListener('click', () => {
+        chatWidget.style.display = 'none';
+    });
+
+    function appendMessage(text, sender, className = '') {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-message ${sender} ${className}`;
+        msgDiv.innerHTML = text; // Server sends escaped HTML
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        return msgDiv;
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
+    async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        appendMessage(escapeHtml(message), 'user');
+        chatInput.value = '';
+        
+        const loadingMsg = appendMessage('Claude is thinking...', 'bot', 'loading');
+
+        try {
+            const response = await fetch('chat_proxy.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+            const data = await response.json();
+            
+            loadingMsg.remove();
+            
+            if (data.reply) {
+                appendMessage(data.reply.replace(/\n/g, '<br>'), 'bot');
+            } else if (data.error) {
+                appendMessage('Error: ' + data.error, 'bot');
+            }
+        } catch (err) {
+            loadingMsg.remove();
+            appendMessage('Connection error. Please try again.', 'bot');
+        }
+    }
+
+    chatSend.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+});
+</script>
+
 </body>
 </html>

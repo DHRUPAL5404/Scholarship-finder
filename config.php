@@ -20,3 +20,8 @@ define('DEBUG', true);
  * Security Settings
  */
 define('SESSION_TIMEOUT', 3600); // 1 hour in seconds
+
+/**
+ * API Keys
+ */
+define('CLAUDE_API_KEY', 'your-anthropic-api-key-here');

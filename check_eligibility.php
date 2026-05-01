@@ -29,6 +29,106 @@ if (!$student) {
     <title>Check Eligibility - ScholarMatch</title>
     <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
     <link rel="stylesheet" href="assets/css/student.css?v=<?php echo time(); ?>">
+    <style>
+        .page-title {
+            text-align: center;
+            color: #2d3748;
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .page-title::after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            margin: 10px auto 0;
+            border-radius: 2px;
+        }
+        .eligible-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+        .eligible-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(102, 126, 234, 0.15);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .eligible-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        }
+        .eligible-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.2);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+        .eligible-card h3 {
+            margin-top: 0;
+            color: #1a202c;
+            font-size: 1.35rem;
+            margin-bottom: 12px;
+            font-weight: 800;
+        }
+        .eligible-card p {
+            color: #4a5568;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+        .deadline-badge {
+            display: inline-block;
+            background: #edf2f7;
+            color: #2d3748;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        .eligible-card .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            text-align: center;
+            padding: 14px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.35);
+        }
+        .eligible-card .btn:hover {
+            opacity: 0.95;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        .empty-state h3 { color: #4a5568; margin-bottom: 10px; }
+        .empty-state p { color: #718096; }
+    </style>
 </head>
 
 <body>
@@ -38,27 +138,61 @@ if (!$student) {
 
     <div class="container">
         <?php if (isset($error)): ?>
-            <p><?php echo htmlspecialchars($error); ?></p>
+            <div class="empty-state">
+                <h3>Profile Incomplete</h3>
+                <p><?php echo htmlspecialchars($error); ?></p>
+                <a href="profile.php" class="btn" style="display:inline-block; margin-top:15px; padding:10px 20px; background:#667eea; color:#fff; border-radius:8px; text-decoration:none;">Go to Profile</a>
+            </div>
         <?php else: ?>
-            <h2>Eligible Scholarships</h2>
+            <h2 class="page-title">Eligible Scholarships</h2>
 
             <?php
-            /* Fetch active scholarships */
-            $scholarships = mysqli_query($conn, "SELECT * FROM scholarships WHERE status='active'");
+            /* Fetch active scholarships and their rules in a single query */
+            $status = 'active';
+            $stmt_sch = mysqli_prepare($conn, "
+                SELECT 
+                    s.scholarship_id, s.title, s.description, s.deadline, 
+                    e.rule_id, e.field_name, e.operator, e.value 
+                FROM scholarships s
+                LEFT JOIN eligibility_rules e ON s.scholarship_id = e.scholarship_id
+                WHERE s.status = ?
+            ");
+            mysqli_stmt_bind_param($stmt_sch, "s", $status);
+            mysqli_stmt_execute($stmt_sch);
+            $result = mysqli_stmt_get_result($stmt_sch);
+
+            $scholarships_data = [];
+
+            while ($row = mysqli_fetch_assoc($result)) {
+                $sid = $row['scholarship_id'];
+                
+                if (!isset($scholarships_data[$sid])) {
+                    $scholarships_data[$sid] = [
+                        'scholarship_id' => $sid,
+                        'title' => $row['title'],
+                        'description' => $row['description'],
+                        'deadline' => $row['deadline'],
+                        'rules' => []
+                    ];
+                }
+                
+                if (!empty($row['rule_id'])) {
+                    $scholarships_data[$sid]['rules'][] = [
+                        'field_name' => $row['field_name'],
+                        'operator' => $row['operator'],
+                        'value' => $row['value']
+                    ];
+                }
+            }
+            mysqli_stmt_close($stmt_sch);
 
             $found = false;
+            $output_html = "<div class='eligible-grid'>";
 
-            while ($sch = mysqli_fetch_assoc($scholarships)) {
-                $sid = $sch['scholarship_id'];
-
-                $stmt_rules = mysqli_prepare($conn, "SELECT * FROM eligibility_rules WHERE scholarship_id=?");
-                mysqli_stmt_bind_param($stmt_rules, "i", $sid);
-                mysqli_stmt_execute($stmt_rules);
-                $rules = mysqli_stmt_get_result($stmt_rules);
-
+            foreach ($scholarships_data as $sid => $sch) {
                 $eligible = true;
 
-                while ($rule = mysqli_fetch_assoc($rules)) {
+                foreach ($sch['rules'] as $rule) {
                     $field = $rule['field_name'];
                     $operator = $rule['operator'];
                     $value = $rule['value'];
@@ -115,22 +249,31 @@ if (!$student) {
                 if ($eligible) {
                     $found = true;
                     $safe_title       = htmlspecialchars($sch['title']);
-                    $safe_description = htmlspecialchars($sch['description']);
-                    $safe_deadline    = htmlspecialchars($sch['deadline']);
+                    $safe_description = htmlspecialchars(mb_substr($sch['description'], 0, 150)) . '...';
+                    $safe_deadline    = htmlspecialchars(date('d M Y', strtotime($sch['deadline'])));
                     $safe_sid         = intval($sid);
-                    echo "
+                    
+                    $output_html .= "
                     <div class='eligible-card'>
                         <h3>{$safe_title}</h3>
                         <p>{$safe_description}</p>
-                        <p><b>Deadline:</b> {$safe_deadline}</p>
-                        <a href='apply_scholarship.php?id={$safe_sid}' class='btn'>Apply Now</a>
+                        <div><span class='deadline-badge'>Deadline: {$safe_deadline}</span></div>
+                        <a href='apply_scholarship.php?id={$safe_sid}' class='btn'>Apply Now &rarr;</a>
                     </div>
                     ";
                 }
             }
 
-            if (!$found) {
-                echo "<p>No scholarships matched your profile.</p>";
+            $output_html .= "</div>";
+
+            if ($found) {
+                echo $output_html;
+            } else {
+                echo "
+                <div class='empty-state'>
+                    <h3>No Matches Found</h3>
+                    <p>We couldn't find any active scholarships that match your current profile details.</p>
+                </div>";
             }
             ?>
         <?php endif; ?>
