@@ -75,7 +75,7 @@ if(isset($_POST['check'])){
         }
         mysqli_stmt_close($stmt_rules);
 
-        $sql = "SELECT u.full_name, u.email, sp.* FROM student_profile sp
+        $sql = "SELECT u.name AS full_name, u.email, sp.* FROM student_profile sp
                 JOIN users u ON u.user_id = sp.user_id";
 
         if($conditions){
