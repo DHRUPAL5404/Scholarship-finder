@@ -43,6 +43,8 @@ $scholarships_table = "CREATE TABLE IF NOT EXISTS scholarships (
     min_marks DECIMAL(5,2) DEFAULT 0,
     max_family_income INT DEFAULT 0,
     state_id INT DEFAULT NULL,
+    start_date DATE DEFAULT NULL,
+    end_date DATE DEFAULT NULL,
     deadline DATE,
     status ENUM('active', 'inactive') DEFAULT 'active',
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -89,6 +91,17 @@ $applications_table = "CREATE TABLE IF NOT EXISTS scholarship_applications (
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 )";
 
+// Create eligibility_rules table
+$eligibility_rules_table = "CREATE TABLE IF NOT EXISTS eligibility_rules (
+    rule_id INT PRIMARY KEY AUTO_INCREMENT,
+    scholarship_id INT NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    operator VARCHAR(10) DEFAULT '=',
+    value VARCHAR(255) NOT NULL,
+    scholarship_title VARCHAR(255),
+    FOREIGN KEY (scholarship_id) REFERENCES scholarships(scholarship_id) ON DELETE CASCADE
+)";
+
 $results = array();
 
 // Execute users table creation
@@ -133,6 +146,13 @@ if(mysqli_query($conn, $applications_table)) {
     $results[] = "✗ Error creating applications table: " . mysqli_error($conn);
 }
 
+// Execute eligibility rules table creation
+if(mysqli_query($conn, $eligibility_rules_table)) {
+    $results[] = "✓ Eligibility rules table created/verified";
+} else {
+    $results[] = "✗ Error creating eligibility rules table: " . mysqli_error($conn);
+}
+
 // Check scholarships table structure and add missing columns
 $alter_table = "ALTER TABLE scholarships ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT 'General'";
 if(mysqli_query($conn, $alter_table)) {
@@ -141,18 +161,36 @@ if(mysqli_query($conn, $alter_table)) {
     $results[] = "⚠ Category column check: " . mysqli_error($conn);
 }
 
+// Check student_profile table structure and add missing email column
+$alter_profile_email = "ALTER TABLE student_profile ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER full_name";
+if(mysqli_query($conn, $alter_profile_email)) {
+    $results[] = "✓ Student profile email column verified";
+} else {
+    $results[] = "⚠ Student profile email column check: " . mysqli_error($conn);
+}
+
 // Create indexes for performance
 $indexes = array(
     "CREATE INDEX IF NOT EXISTS idx_scholarship_status ON scholarships(status)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_deadline ON scholarships(deadline)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_category ON scholarships(category)",
     "CREATE INDEX IF NOT EXISTS idx_scholarship_state ON scholarships(state_id)",
-    "CREATE INDEX IF NOT EXISTS idx_applications_user ON scholarship_applications(user_id)"
+    "CREATE INDEX IF NOT EXISTS idx_applications_user ON scholarship_applications(user_id)",
+    "CREATE INDEX IF NOT EXISTS idx_applications_scholarship ON scholarship_applications(scholarship_id)",
+    // Heavily queried in eligibility checks — every scholarship card triggers a lookup here
+    "CREATE INDEX IF NOT EXISTS idx_eligibility_rules_scholarship ON eligibility_rules(scholarship_id)",
+    // student_profile.user_id already has a UNIQUE constraint (which creates an implicit index),
+    // but we add an explicit named index for clarity and query planner hints
+    "CREATE INDEX IF NOT EXISTS idx_student_profile_user ON student_profile(user_id)"
 );
 
+$index_ok = 0;
 foreach($indexes as $index_query) {
-    @mysqli_query($conn, $index_query);
+    if(@mysqli_query($conn, $index_query)){
+        $index_ok++;
+    }
 }
+$results[] = "✓ {$index_ok}/" . count($indexes) . " performance indexes created/verified";
 
 // Insert sample states if table is empty
 $state_count = mysqli_fetch_assoc(mysqli_query($conn, "SELECT COUNT(*) as count FROM states"));
@@ -214,9 +252,9 @@ if($count['count'] == 0) {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Database Setup - ScholarMatch</title>
+    <title>Database Setup - Scholar Match</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
-    <style>
+<style>
         body {
             font-family: Arial, sans-serif;
             max-width: 800px;

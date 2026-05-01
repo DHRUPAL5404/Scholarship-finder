@@ -5,224 +5,255 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     exit();
 }
 include "db.php";
+require_once "includes/csrf.php";
 
-$sch = mysqli_query($conn,"SELECT * FROM scholarships");
+$flash_success = '';
+$flash_error   = '';
 
-if(isset($_POST['add'])){
-    $scholarship_id = mysqli_real_escape_string($conn, $_POST['scholarship']);
-    $field_name = mysqli_real_escape_string($conn, $_POST['field']);
-    $operator = mysqli_real_escape_string($conn, $_POST['operator'] ?? '=');
-    if(!in_array($operator, array('=', '>=', '<=', '>', '<'), true)){
-        $operator = '=';
+if(isset($_POST['add_all'])){
+
+    // ── CSRF verification ──────────────────────────────────────────────────
+    csrf_verify();
+
+    $scholarship_id = intval($_POST['scholarship'] ?? 0);
+    $rules          = $_POST['rules'] ?? [];
+
+    // ── Server-side validation ─────────────────────────────────────────────
+    if($scholarship_id <= 0){
+        $flash_error = "Please select a valid scholarship.";
+    } elseif(!is_array($rules) || empty($rules)){
+        $flash_error = "No rules were submitted.";
+    } else {
+        $allowed_ops   = ['=', '>=', '<=', '>', '<'];
+        $inserted      = 0;
+        $skipped       = 0;
+
+        // ── Validate scholarship exists before inserting rules ─────────────
+        $sch_check = $conn->prepare("SELECT scholarship_id FROM scholarships WHERE scholarship_id = ?");
+        if(!$sch_check){
+            $flash_error = "Database error. Please try again.";
+        } else {
+            $sch_check->bind_param("i", $scholarship_id);
+            $sch_check->execute();
+            $sch_result = $sch_check->get_result();
+            $sch_check->close();
+
+            if($sch_result->num_rows === 0){
+                $flash_error = "Selected scholarship does not exist.";
+            } else {
+
+                // ── Prepare the INSERT statement once, reuse in loop ───────
+                $insert_stmt = $conn->prepare(
+                    "INSERT INTO eligibility_rules (scholarship_id, field_name, operator, value)
+                     VALUES (?, ?, ?, ?)"
+                );
+
+                if(!$insert_stmt){
+                    $flash_error = "Database error. Please try again.";
+                } else {
+                    foreach($rules as $field => $data){
+                        $operator  = trim($data['operator'] ?? '=');
+                        $value     = trim($data['value']    ?? '');
+
+                        // Skip empty rule values
+                        if($value === ''){
+                            $skipped++;
+                            continue;
+                        }
+
+                        // Normalise operator
+                        if(!in_array($operator, $allowed_ops, true)){
+                            $operator = '=';
+                        }
+
+                        // Sanitise field name — only allow alphanumeric + underscore
+                        $field_clean = preg_replace('/[^a-zA-Z0-9_]/', '', $field);
+                        if(empty($field_clean)){
+                            $skipped++;
+                            continue;
+                        }
+
+                        // ── Bind and execute prepared insert ───────────────
+                        $insert_stmt->bind_param("isss", $scholarship_id, $field_clean, $operator, $value);
+
+                        if($insert_stmt->execute()){
+                            $inserted++;
+                        }
+                    }
+
+                    $insert_stmt->close();
+
+                    if($inserted > 0){
+                        $_SESSION['flash_success'] = "Added {$inserted} rule(s) successfully."
+                            . ($skipped > 0 ? " {$skipped} empty rule(s) were skipped." : "");
+                        header("Location: admin_dashboard.php");
+                        exit();
+                    } else {
+                        $flash_error = "No rules were added. Please fill in at least one rule value.";
+                    }
+                }
+            }
+        }
     }
-    $value = mysqli_real_escape_string($conn, $_POST['value']);
-    
-    mysqli_query($conn,"INSERT INTO eligibility_rules
-    (scholarship_id,field_name,operator,value)
-    VALUES
-    ('$scholarship_id','$field_name','$operator','$value')");
-    echo "✅ Rule Added Successfully!";
 }
+
+$selected_scholarship = intval($_POST['scholarship'] ?? ($_GET['scholarship'] ?? 0));
+
+// Fetch scholarships using prepared statement (no user input, but consistent style)
+$sch_stmt = $conn->prepare("SELECT scholarship_id, title FROM scholarships ORDER BY title ASC");
+$sch_stmt->execute();
+$sch = $sch_stmt->get_result();
+$sch_stmt->close();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Eligibility Rule - ScholarMatch</title>
-    <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
-    <script>
-        function showOtherInput(selectElement, fieldId) {
-            const otherInput = document.getElementById(fieldId);
-            if(selectElement.value === 'Other' || selectElement.value === 'Others') {
-                otherInput.style.display = 'block';
-            } else {
-                otherInput.style.display = 'none';
-                otherInput.querySelector('input').value = '';
-            }
-        }
-    </script>
+    <title>Add Eligibility Rule - Scholar Match</title>
+    <link rel="stylesheet" href="assets/css/common.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="assets/css/admin.css?v=<?php echo time(); ?>">
 </head>
 <body>
-    <div class="eligibility-container">
-        <?php if(isset($_POST['add'])) { ?>
-            <div class="success-message">✅ Rule Added Successfully!</div>
-        <?php } ?>
+    <?php include "includes/navbar.php"; ?>
+    <div class="eligibility-container container">
         <h1>Add Eligibility Rule</h1>
 
-        <div class="scholarship-selector">
-            <label><strong>Select Scholarship:</strong></label>
-            <form method="post" style="display:inline;">
-            <select name="scholarship" onchange="document.location='?scholarship='+this.value;" required>
-        <option value="">-- Select Scholarship --</option>
-        <?php $sch = mysqli_query($conn,"SELECT * FROM scholarships");
-        while($s=mysqli_fetch_assoc($sch)){ ?>
-        <option value="<?= $s['scholarship_id'] ?>"><?= $s['title'] ?></option>
-        <?php } ?>
-        </select>
-        </form>
-        </div>
+        <?php if($flash_success): ?>
+            <div class="success-message"><?php echo htmlspecialchars($flash_success); ?></div>
+        <?php endif; ?>
+        <?php if($flash_error): ?>
+            <div class="error-message"><?php echo htmlspecialchars($flash_error); ?></div>
+        <?php endif; ?>
 
-        <div class="rule-section">
-            <strong>Gender</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="gender">
-        <select name="value" required><option value="">-- Select Gender --</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option><option value="All">All</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+        <form method="post" id="add-eligibility-form">
+            <!-- ── CSRF token ── -->
+            <?php csrf_token(); ?>
 
-        <div class="rule-section">
-            <strong>Age</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="age">
-        <select name="operator" required><option value=">=">&ge;</option><option value="<=">&le;</option><option value="=">=</option></select>
-        <input type="number" name="value" placeholder="e.g., 18" required>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="scholarship-selector">
+                <label><strong>Select Scholarship: <span style="color:red">*</span></strong></label>
+                <select name="scholarship" id="eligibility-scholarship-select" required>
+                    <option value="">-- Select Scholarship --</option>
+                    <?php while($s = $sch->fetch_assoc()): ?>
+                        <option value="<?= intval($s['scholarship_id']) ?>"
+                            <?= $selected_scholarship === intval($s['scholarship_id']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($s['title']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
 
-        <div class="rule-section">
-            <strong>Education Level</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="education_level">
-        <select name="value" required onchange="showOtherInput(this, 'edu_other')"><option value="">-- Select --</option><option value="Below 10th">Below 10th</option><option value="Below 10th - Primary School (Std 1–8)">Below 10th - Primary</option><option value="Below 10th - Secondary School – Appearing (Std 9–10)">Below 10th - Secondary</option><option value="10th Pass(SSC)">10th Pass</option><option value="Undergraduate">Undergraduate</option><option value="Postgraduate">Postgraduate</option><option value="PhD">PhD</option><option value="Other">Others</option></select>
-        <div id="edu_other"><input type="text" name="value" placeholder="Specify" required></div>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Gender</strong>
+                <input type="hidden" name="rules[gender][operator]" value="=">
+                <select name="rules[gender][value]" id="rule-gender">
+                    <option value="">-- Skip --</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                    <option value="All">All</option>
+                </select>
+            </div>
 
-        <div class="rule-section">
-            <strong>10th Pass - Stream & Diploma Courses</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="education_level">
-        <input type="hidden" name="operator" value="=">
-        <select name="value" required><option value="">-- Select --</option><option value="10th Pass(SSC) - Science">Science</option><option value="10th Pass(SSC) - Commerce">Commerce</option><option value="10th Pass(SSC) - Arts">Arts</option><option value="10th Pass(SSC) - Diploma">Diploma</option><option value="10th Pass(SSC) - Diploma - Diploma in Engineering (Polytechnic)">Diploma in Engineering</option><option value="10th Pass(SSC) - Diploma - Diploma in Computer Engineering / IT">Diploma in IT</option><option value="10th Pass(SSC) - Diploma - Diploma in Mechanical Engineering">Diploma in Mechanical</option><option value="10th Pass(SSC) - Diploma - Diploma in Electrical Engineering">Diploma in Electrical</option><option value="10th Pass(SSC) - Diploma - Diploma in Civil Engineering">Diploma in Civil</option><option value="10th Pass(SSC) - Diploma - Diploma in Electronics / EC">Diploma in Electronics</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Age</strong>
+                <select name="rules[age][operator]" id="rule-age-op">
+                    <option value=">=">&ge;</option>
+                    <option value="<=">&le;</option>
+                    <option value="=">=</option>
+                </select>
+                <input type="number" name="rules[age][value]" id="rule-age-val"
+                       placeholder="e.g., 18" min="1" max="100">
+            </div>
 
-        <div class="rule-section">
-            <strong>Undergraduate Courses</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="education_level">
-        <input type="hidden" name="operator" value="=">
-        <select name="value" required><option value="">-- Select --</option><option value="Undergraduate - Science - Group A">B.Sc (PCM)</option><option value="Undergraduate - Science - Group B">B.Sc (PCB)</option><option value="Undergraduate - Commerce">B.Com</option><option value="Undergraduate - Arts">B.A</option><option value="Undergraduate - Science">B.Tech/Engineering</option><option value="Undergraduate - Medical">Medical</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Education Level</strong>
+                <input type="hidden" name="rules[education_level][operator]" value="=">
+                <select name="rules[education_level][value]" id="rule-edu">
+                    <option value="">-- Skip --</option>
+                    <option value="Below 10th">Below 10th</option>
+                    <option value="10th Pass(SSC)">10th Pass</option>
+                    <option value="Undergraduate">Undergraduate</option>
+                    <option value="Postgraduate">Postgraduate</option>
+                    <option value="PhD">PhD</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
 
-        <div class="rule-section">
-            <strong>Postgraduate Courses</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="education_level">
-        <input type="hidden" name="operator" value="=">
-        <select name="value" required><option value="">-- Select --</option><option value="Postgraduate - M.E. / M.Tech (Engineering)">M.Tech</option><option value="Postgraduate - M.Sc (Science)">M.Sc</option><option value="Postgraduate - M.Com (Commerce)">M.Com</option><option value="Postgraduate - M.A (Arts / Humanities)">M.A</option><option value="Postgraduate - MCA (Computer Applications)">MCA</option><option value="Postgraduate - MBA (Master of Business Administration)">MBA</option><option value="Postgraduate - M.Voc (Vocational Master's)">M.Voc</option><option value="Postgraduate - M.Ed (Education)">M.Ed</option><option value="Postgraduate - LLM (Law)">LLM</option><option value="Postgraduate - M.Pharm (Pharmacy)">M.Pharm</option><option value="Postgraduate - M.Sc Nursing">M.Sc Nursing</option><option value="Postgraduate - MS (Medical / Clinical)">MS Medical</option><option value="Postgraduate - MPH (Public Health)">MPH</option><option value="Postgraduate - MHA (Hospital Administration)">MHA</option><option value="Postgraduate - MSW (Social Work)">MSW</option><option value="Postgraduate - M.Des (Design)">M.Des</option><option value="Postgraduate - M.Phil">M.Phil</option><option value="Postgraduate - M.Tech (AI / ML / Data Science / Cyber Security)">M.Tech (AI/ML)</option><option value="Postgraduate - M.Sc (Data Science / AI / Analytics)">M.Sc (Data Science)</option><option value="Postgraduate - PG Diploma">PG Diploma</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Marks (%)</strong>
+                <select name="rules[marks][operator]" id="rule-marks-op">
+                    <option value=">=">&ge;</option>
+                    <option value="<=">&le;</option>
+                    <option value="=">=</option>
+                </select>
+                <input type="number" name="rules[marks][value]" id="rule-marks-val"
+                       placeholder="e.g., 75" step="0.01" min="0" max="100">
+            </div>
 
-        <div class="rule-section">
-            <strong>PhD Courses</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="education_level">
-        <input type="hidden" name="operator" value="=">
-        <select name="value" required><option value="">-- Select --</option><option value="PhD - Computer Science / IT">PhD (CS/IT)</option><option value="PhD - Engineering">PhD (Engineering)</option><option value="PhD - Mathematics">PhD (Math)</option><option value="PhD - Physics">PhD (Physics)</option><option value="PhD - Chemistry">PhD (Chemistry)</option><option value="PhD - Biology / Life Sciences">PhD (Biology)</option><option value="PhD - Environmental Science">PhD (Environment)</option><option value="PhD - Statistics">PhD (Statistics)</option><option value="PhD - English">PhD (English)</option><option value="PhD - Economics">PhD (Economics)</option><option value="PhD - History">PhD (History)</option><option value="PhD - Political Science">PhD (Political)</option><option value="PhD - Sociology">PhD (Sociology)</option><option value="PhD - Psychology">PhD (Psychology)</option><option value="PhD - Philosophy">PhD (Philosophy)</option><option value="PhD - Education">PhD (Education)</option><option value="PhD - Commerce">PhD (Commerce)</option><option value="PhD - Management / Business Administration">PhD (Management)</option><option value="PhD - Finance">PhD (Finance)</option><option value="PhD - Marketing">PhD (Marketing)</option><option value="PhD - Human Resource Management">PhD (HR)</option><option value="PhD - Law">PhD (Law)</option><option value="PhD - Medical Sciences">PhD (Medical)</option><option value="PhD - Pharmacy">PhD (Pharmacy)</option><option value="PhD - Nursing">PhD (Nursing)</option><option value="PhD - Public Health">PhD (PH)</option><option value="PhD - Agriculture">PhD (Agriculture)</option><option value="PhD - Veterinary Science">PhD (Veterinary)</option><option value="PhD - Design">PhD (Design)</option><option value="PhD - Data Science / AI / ML">PhD (Data/AI)</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Institution Type</strong>
+                <input type="hidden" name="rules[institution_type][operator]" value="=">
+                <select name="rules[institution_type][value]" id="rule-inst">
+                    <option value="">-- Skip --</option>
+                    <option value="Government">Government</option>
+                    <option value="Private">Private</option>
+                    <option value="Government-Aided">Government-Aided</option>
+                    <option value="Autonomous">Autonomous</option>
+                    <option value="University">University</option>
+                </select>
+            </div>
 
-        <div class="rule-section">
-            <strong>Marks / Percentage / GPA</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <select name="field" required><option value="">-- Select --</option><option value="marks">Marks</option><option value="percentage">Percentage</option><option value="gpa">GPA</option></select>
-        <select name="operator" required><option value=">=">&ge;</option><option value="<=">&le;</option><option value="=">=</option></select>
-        <input type="number" name="value" placeholder="e.g., 75" step="0.01" required>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Family Income (₹)</strong>
+                <select name="rules[family_income][operator]" id="rule-income-op">
+                    <option value="<=">&le;</option>
+                    <option value=">=">&ge;</option>
+                    <option value="=">=</option>
+                </select>
+                <input type="number" name="rules[family_income][value]" id="rule-income-val"
+                       placeholder="e.g., 500000" min="0">
+            </div>
 
-        <div class="rule-section">
-            <strong>Institution Type</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="institution_type">
-        <select name="value" required><option value="">-- Select --</option><option value="Government">Government</option><option value="Private">Private</option><option value="Autonomous">Autonomous</option><option value="University">University</option><option value="Polytechnic">Polytechnic</option><option value="College">College</option><option value="School">School</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Category</strong>
+                <input type="hidden" name="rules[category][operator]" value="=">
+                <select name="rules[category][value]" id="rule-category">
+                    <option value="">-- Skip --</option>
+                    <option value="General (GEN / UR)">General (GEN / UR)</option>
+                    <option value="Other Backward Class (OBC)">OBC</option>
+                    <option value="Scheduled Caste (SC)">SC</option>
+                    <option value="Scheduled Tribe (ST)">ST</option>
+                </select>
+            </div>
 
-        <div class="rule-section">
-            <strong>State</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="state">
-        <input type="hidden" name="operator" value="=">
-        <select name="value" required><option value="">-- Select --</option><option value="Andhra Pradesh">Andhra Pradesh</option><option value="Arunachal Pradesh">Arunachal Pradesh</option><option value="Assam">Assam</option><option value="Bihar">Bihar</option><option value="Chhattisgarh">Chhattisgarh</option><option value="Goa">Goa</option><option value="Gujarat">Gujarat</option><option value="Haryana">Haryana</option><option value="Himachal Pradesh">Himachal Pradesh</option><option value="Jharkhand">Jharkhand</option><option value="Karnataka">Karnataka</option><option value="Kerala">Kerala</option><option value="Madhya Pradesh">Madhya Pradesh</option><option value="Maharashtra">Maharashtra</option><option value="Manipur">Manipur</option><option value="Meghalaya">Meghalaya</option><option value="Mizoram">Mizoram</option><option value="Nagaland">Nagaland</option><option value="Odisha">Odisha</option><option value="Punjab">Punjab</option><option value="Rajasthan">Rajasthan</option><option value="Sikkim">Sikkim</option><option value="Tamil Nadu">Tamil Nadu</option><option value="Telangana">Telangana</option><option value="Tripura">Tripura</option><option value="Uttar Pradesh">Uttar Pradesh</option><option value="Uttarakhand">Uttarakhand</option><option value="West Bengal">West Bengal</option><option value="Ladakh">Ladakh</option><option value="Jammu and Kashmir">Jammu and Kashmir</option><option value="Puducherry">Puducherry</option><option value="Lakshadweep">Lakshadweep</option><option value="Daman and Diu">Daman and Diu</option><option value="Dadra and Nagar Haveli">Dadra and Nagar Haveli</option><option value="Chandigarh">Chandigarh</option><option value="Delhi">Delhi</option><option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Minority Status</strong>
+                <input type="hidden" name="rules[minority_status][operator]" value="=">
+                <select name="rules[minority_status][value]" id="rule-minority">
+                    <option value="">-- Skip --</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                </select>
+            </div>
 
-        <div class="rule-section">
-            <strong>Family Income</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="family_income">
-        <select name="operator" required><option value="<=">&le;</option><option value=">=">&ge;</option><option value="=">=</option></select>
-        <input type="number" name="value" placeholder="e.g., 500000" required>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
+            <div class="rule-section">
+                <strong>Disability Percent (%)</strong>
+                <select name="rules[disability_percent][operator]" id="rule-disability-op">
+                    <option value=">=">&ge;</option>
+                    <option value="<=">&le;</option>
+                    <option value=">">&gt;</option>
+                </select>
+                <input type="number" name="rules[disability_percent][value]" id="rule-disability-val"
+                       placeholder="e.g., 40" min="0" max="100">
+            </div>
 
-        <div class="rule-section">
-            <strong>Category</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="category">
-        <select name="value" required><option value="">-- Select --</option><option value="General (GEN / UR)">General (GEN / UR)</option><option value="Other Backward Class (OBC)">OBC</option><option value="Scheduled Caste (SC)">SC</option><option value="Scheduled Tribe (ST)">ST</option></select>
-        <button name="add" type="submit">Add</button>
+            <div class="rule-section">
+                <button name="add_all" type="submit" id="add-rules-btn">Add Selected Rules</button>
+                <a href="admin_dashboard.php" class="btn-secondary" style="margin-left:1rem;">Cancel</a>
+            </div>
         </form>
-        </div>
-
-        <div class="rule-section">
-            <strong>Minority Status</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="minority_status">
-        <select name="value" required><option value="">-- Select --</option><option value="Yes">Yes</option><option value="No">No</option></select>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
-
-        <div class="rule-section">
-            <strong>Disability Percent</strong>
-            <form method="post">
-        <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-        <input type="hidden" name="field" value="disability_percent">
-        <select name="operator" required><option value=">=">&ge;</option><option value="<=">&le;</option><option value=">">&gt;</option></select>
-        <input type="number" name="value" placeholder="e.g., 40" min="0" max="100" required>
-        <button name="add" type="submit">Add</button>
-        </form>
-        </div>
-
-        <div class="rule-section">
-            <strong>Scholarships Already Applied</strong>
-            <form method="post">
-            <input type="hidden" name="scholarship" value="<?= $_GET['scholarship'] ?? '' ?>" required>
-            <input type="hidden" name="field" value="scholarships_applied">
-            <select name="operator" required><option value="<=">&le;</option><option value=">=">&ge;</option></select>
-            <input type="number" name="value" placeholder="e.g., 5" min="0" required>
-            <button name="add" type="submit">Add</button>
-            </form>
-        </div>
     </div>
+    <?php include "includes/footer.php"; ?>
 </body>
 </html>

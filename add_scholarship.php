@@ -1,6 +1,7 @@
-﻿<?php
+<?php
 session_start();
 include "db.php";
+require_once "includes/csrf.php";
 
 if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
     header("Location: login.php");
@@ -8,23 +9,96 @@ if(!isset($_SESSION['user_id']) || $_SESSION['role'] != 'admin'){
 }
 
 $flash_success = $_SESSION['flash_success'] ?? '';
-$flash_error = $_SESSION['flash_error'] ?? '';
+$flash_error   = $_SESSION['flash_error']   ?? '';
 unset($_SESSION['flash_success'], $_SESSION['flash_error']);
 
-if(isset($_POST['add'])){
-    $title = mysqli_real_escape_string($conn, $_POST['title']);
-    $desc = mysqli_real_escape_string($conn, $_POST['description']);
-    $deadline = mysqli_real_escape_string($conn, $_POST['deadline']);
-
-    $ok = mysqli_query($conn,"INSERT INTO scholarships(title,description,deadline,status)
-    VALUES('$title','$desc','$deadline','active')");
-
-    if($ok){
-        $_SESSION['flash_success'] = "Scholarship added successfully.";
-    } else {
-        $_SESSION['flash_error'] = "Failed to add scholarship: " . mysqli_error($conn);
+// ── Ensure start_date / end_date columns exist (idempotent) ───────────────────
+function ensureScholarshipDateColumns($conn): void {
+    $needed = [
+        'start_date' => 'DATE NULL',
+        'end_date'   => 'DATE NULL',
+    ];
+    foreach($needed as $col => $def){
+        $check = mysqli_query($conn, "SHOW COLUMNS FROM scholarships LIKE '$col'");
+        if($check && mysqli_num_rows($check) === 0){
+            mysqli_query($conn, "ALTER TABLE scholarships ADD COLUMN $col $def");
+        }
     }
-    header("Location: add_scholarship.php");
+}
+ensureScholarshipDateColumns($conn);
+
+if(isset($_POST['add'])){
+
+    // ── CSRF verification ──────────────────────────────────────────────────
+    csrf_verify();
+
+    // ── Collect & sanitise inputs ──────────────────────────────────────────
+    $title      = trim($_POST['title']       ?? '');
+    $desc       = trim($_POST['description'] ?? '');
+    $start_date = trim($_POST['start_date']  ?? '');
+    $end_date   = trim($_POST['end_date']    ?? '');
+
+    // ── Server-side validation ─────────────────────────────────────────────
+    $errors = [];
+
+    if(empty($title)){
+        $errors[] = "Scholarship title is required.";
+    } elseif(strlen($title) > 255){
+        $errors[] = "Title must not exceed 255 characters.";
+    }
+
+    if(empty($desc)){
+        $errors[] = "Description is required.";
+    } elseif(strlen($desc) < 20){
+        $errors[] = "Description must be at least 20 characters.";
+    }
+
+    if(empty($start_date)){
+        $errors[] = "Start date is required.";
+    } elseif(!strtotime($start_date)){
+        $errors[] = "Start date is not a valid date.";
+    }
+
+    if(empty($end_date)){
+        $errors[] = "End date is required.";
+    } elseif(!strtotime($end_date)){
+        $errors[] = "End date is not a valid date.";
+    }
+
+    if(empty($errors) && strtotime($start_date) > strtotime($end_date)){
+        $errors[] = "Start date cannot be after end date.";
+    }
+
+    if(!empty($errors)){
+        $_SESSION['flash_error'] = implode(" ", $errors);
+        header("Location: add_scholarship.php");
+        exit();
+    }
+
+    // ── Insert using prepared statement ────────────────────────────────────
+    // deadline mirrors end_date for backward compatibility
+    $status   = 'active';
+    $deadline = $end_date;
+
+    $stmt = $conn->prepare(
+        "INSERT INTO scholarships (title, description, start_date, end_date, deadline, status)
+         VALUES (?, ?, ?, ?, ?, ?)"
+    );
+
+    if(!$stmt){
+        $_SESSION['flash_error'] = "Database error. Please try again later.";
+    } else {
+        $stmt->bind_param("ssssss", $title, $desc, $start_date, $end_date, $deadline, $status);
+
+        if($stmt->execute()){
+            $_SESSION['flash_success'] = "Scholarship \"" . htmlspecialchars($title) . "\" added successfully.";
+        } else {
+            $_SESSION['flash_error'] = "Failed to add scholarship. Please try again.";
+        }
+        $stmt->close();
+    }
+
+    header("Location: admin_dashboard.php");
     exit();
 }
 ?>
@@ -33,67 +107,74 @@ if(isset($_POST['add'])){
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Scholarship - ScholarMatch</title>
+    <title>Add Scholarship - Scholar Match</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
-    <!-- Navbar -->
-    <nav>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="index.php#how-it-works">How It Works</a></li>
-            <li><a href="index.php#features">Features</a></li>
-            <?php if(isset($_SESSION['user_id'])): ?>
-                <li><a href="admin_dashboard.php">Dashboard</a></li>
-                <li><a href="logout.php">Logout</a></li>
-            <?php else: ?>
-                <li><a href="login.php">Login</a></li>
-                <li><a href="register.php">Register</a></li>
-            <?php endif; ?>
-        </ul>
-    </nav>
+    <?php include "includes/navbar.php"; ?>
 
     <div class="container">
         <h2>Add New Scholarship</h2>
+
         <?php if($flash_success): ?>
             <div class="alert success"><?php echo htmlspecialchars($flash_success); ?></div>
         <?php endif; ?>
         <?php if($flash_error): ?>
             <div class="alert danger"><?php echo htmlspecialchars($flash_error); ?></div>
         <?php endif; ?>
-        <form method="post">
-            <input type="text" name="title" placeholder="Title" required><br><br>
-            <textarea name="description" placeholder="Description" required></textarea><br><br>
-            <input type="date" name="deadline" required><br><br>
-            <button name="add">Add</button>
+
+        <form method="post" action="add_scholarship.php" id="add-scholarship-form">
+            <!-- ── CSRF token ── -->
+            <?php csrf_token(); ?>
+
+            <div class="input-wrapper">
+                <label for="sch-title">Title <span style="color:red">*</span></label>
+                <input type="text" name="title" id="sch-title"
+                       placeholder="e.g. Merit Scholarship 2026"
+                       maxlength="255" required
+                       value="<?php echo htmlspecialchars($_POST['title'] ?? ''); ?>">
+            </div>
+
+            <div class="input-wrapper">
+                <label for="sch-description">Description <span style="color:red">*</span></label>
+                <textarea name="description" id="sch-description"
+                          placeholder="Describe the scholarship criteria and benefits (min 20 characters)"
+                          rows="5" required minlength="20"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
+            </div>
+
+            <div class="input-wrapper">
+                <label for="sch-start">Start Date <span style="color:red">*</span></label>
+                <input type="date" name="start_date" id="sch-start" required
+                       value="<?php echo htmlspecialchars($_POST['start_date'] ?? ''); ?>">
+            </div>
+
+            <div class="input-wrapper">
+                <label for="sch-end">End Date / Deadline <span style="color:red">*</span></label>
+                <input type="date" name="end_date" id="sch-end" required
+                       value="<?php echo htmlspecialchars($_POST['end_date'] ?? ''); ?>">
+            </div>
+
+            <button type="submit" name="add" id="add-scholarship-btn">Add Scholarship</button>
+            <a href="admin_dashboard.php" class="btn-secondary" style="margin-left:1rem;">Cancel</a>
         </form>
     </div>
 
-    <!-- Footer -->
-    <footer id="footer">
-        <div>
-            <h4>ScholarMatch</h4>
-            <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
-        </div>
-        <div>
-            <h4>Quick Links</h4>
-            <ul>
-                <li><a href="index.php">Home</a></li>
-                <li><a href="admin_dashboard.php">Admin Dashboard</a></li>
-                <li><a href="manage_scholarships.php">Manage Scholarships</a></li>
-            </ul>
-        </div>
-        <div>
-            <h4>Contact</h4>
-            <p>Email: info@scholarmatch.com</p>
-            <p>Phone: (555) 123-4567</p>
-        </div>
-        <div>
-            <h4>Follow Us</h4>
-            <p>Facebook | Twitter | LinkedIn | Instagram</p>
-        </div>
-    </footer>
+    <?php include "includes/footer.php"; ?>
 
+    <script src="assets/js/validation.js?v=<?php echo time(); ?>"></script>
+
+    <script>
+        // Client-side: enforce end_date >= start_date for better UX
+        const startInput = document.getElementById('sch-start');
+        const endInput   = document.getElementById('sch-end');
+
+        startInput.addEventListener('change', function(){
+            if(endInput.value && endInput.value < this.value){
+                endInput.value = '';
+            }
+            endInput.min = this.value;
+        });
+    </script>
 </body>
 </html>

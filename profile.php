@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 include "db.php";
 
@@ -11,7 +11,7 @@ $user_id = $_SESSION['user_id'];
 
 // Handle form submission
 $success_message = '';
-$error_message   = '';
+$error_message = '';
 
 if(isset($_POST['save_profile'])){
     $stmt = $conn->prepare("SELECT profile_id FROM student_profile WHERE user_id = ?");
@@ -21,7 +21,7 @@ if(isset($_POST['save_profile'])){
     $stmt->close();
 
     $full_name        = $_POST['full_name'];
-    $email            = $_POST['email'];
+    $email            = trim($_POST['email'] ?? '');
     $education_level  = $_POST['education_level'];
     $marks            = intval($_POST['marks']);
     $family_income    = intval($_POST['family_income']);
@@ -40,32 +40,24 @@ if(isset($_POST['save_profile'])){
     $course           = $_POST['course'] ?? '';
     $current_year     = $_POST['current_year'] ?? '';
 
-    // Build education_final string
-    $education_final = $education_level;
-    if($education_level === 'Below 10th' && !empty($_POST['below_10th_level'])) {
-        $education_final = $_POST['below_10th_level'];
-    } elseif($education_level === '10th Pass(SSC)' && !empty($_POST['tenth_stream'])) {
-        $tenth_stream = $_POST['tenth_stream'];
-        if($tenth_stream === 'Diploma' && !empty($_POST['diploma_course'])) {
-            $education_final = '10th Pass - Diploma - ' . $_POST['diploma_course'];
-        } else {
-            $education_final = '10th Pass - ' . $tenth_stream;
-        }
+    // Keep course column populated from selected course dropdowns too
+    if($education_level === 'Below 10th') {
+        $course_final = $_POST['below_10th_level'] ?? '';
+    } elseif($education_level === '10th Pass(SSC)') {
+        $course_final = $_POST['tenth_stream'] ?? '';
     } elseif($education_level === 'Undergraduate') {
-        $ustream = $_POST['undergrad_stream'] ?? '';
-        $sgroup  = $_POST['science_group'] ?? '';
-        $ucourse = $_POST['undergrad_course'] ?? '';
-        if($ustream === 'Science' && $sgroup && $ucourse) {
-            $education_final = "Undergraduate - Science - $sgroup - $ucourse";
-        } elseif($ustream && $ucourse) {
-            $education_final = "Undergraduate - $ustream - $ucourse";
-        } elseif($ustream) {
-            $education_final = "Undergraduate - $ustream";
-        }
-    } elseif($education_level === 'Postgraduate' && !empty($_POST['postgrad_course'])) {
-        $education_final = $_POST['postgrad_course'];
-    } elseif($education_level === 'PhD' && !empty($_POST['phd_course'])) {
-        $education_final = $_POST['phd_course'];
+        $course_final = $_POST['undergrad_course'] ?? '';
+    } elseif($education_level === 'Postgraduate') {
+        $course_final = $_POST['postgrad_course'] ?? '';
+    } elseif($education_level === 'PhD') {
+        $course_final = $_POST['phd_field'] ?? '';
+    } else {
+        $course_final = trim($_POST['course'] ?? '');
+    }
+
+    $education_final = $education_level; // Base level
+    if($course_final !== '') {
+        $education_final = $education_level . ' - ' . $course_final;
     }
 
     if($exists) {
@@ -75,11 +67,11 @@ if(isset($_POST['save_profile'])){
             age=?, disability_type=?, disability_percent=?, minority_status=?,
             parent_name=?, parent_occupation=?, parent_contact=?, course=?, current_year=?
             WHERE user_id=?");
-        $stmt->bind_param("sssiissiisisssssssssi",
+        $stmt->bind_param("sssiissiisisissssssi",
             $full_name, $email, $education_final, $marks, $family_income,
             $category, $gender, $state_id, $district_id, $institution_type,
             $age, $disability_type, $disability_percent, $minority_status,
-            $parent_name, $parent_occupation, $parent_contact, $course, $current_year,
+            $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year,
             $user_id);
     } else {
         $stmt = $conn->prepare("INSERT INTO student_profile
@@ -88,22 +80,24 @@ if(isset($_POST['save_profile'])){
              disability_type, disability_percent, minority_status,
              parent_name, parent_occupation, parent_contact, course, current_year)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-        $stmt->bind_param("isssiissiisissssssss",
+        $stmt->bind_param("isssiissiisisisssssss",
             $user_id, $full_name, $email, $education_final, $marks, $family_income,
             $category, $gender, $state_id, $district_id, $institution_type, $age,
             $disability_type, $disability_percent, $minority_status,
-            $parent_name, $parent_occupation, $parent_contact, $course, $current_year);
+            $parent_name, $parent_occupation, $parent_contact, $course_final, $current_year);
     }
 
-    if($stmt->execute()){
-        $_SESSION['profile_success'] = $exists ? "Profile updated successfully!" : "Profile saved successfully!";
+    if($stmt->execute()) {
+        error_log("Profile saved successfully for user_id: $user_id"); // Log success
         header("Location: student_dashboard.php");
         exit();
     } else {
-        $error_message = "Error: " . $stmt->error;
+        $error_message = "Database Error: " . $stmt->error . " (SQLSTATE: " . $stmt->sqlstate . ")";
+        error_log("Profile save FAILED for user_id: $user_id - " . $stmt->error); // Log failure
     }
     $stmt->close();
 }
+
 
 // Fetch existing profile
 $stmt = $conn->prepare("SELECT * FROM student_profile WHERE user_id = ?");
@@ -123,42 +117,31 @@ $saved_district_id = $profile['district_id'] ?? 0;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $is_edit ? 'Edit' : 'Create' ?> Profile - ScholarMatch</title>
+    <title><?= $is_edit ? 'Edit' : 'Create' ?> Profile - Scholar Match</title>
     <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>">
 </head>
 <body>
 
-<nav>
-    <ul>
-        <li><a href="index.php">Home</a></li>
-        <?php if(isset($_SESSION['user_id'])): ?>
-            <li><a href="student_dashboard.php">Dashboard</a></li>
-            <li><a href="logout.php">Logout</a></li>
-        <?php else: ?>
-            <li><a href="login.php">Login</a></li>
-            <li><a href="register.php">Register</a></li>
-        <?php endif; ?>
-    </ul>
-</nav>
+<?php include "includes/navbar.php"; ?>
 
 <div class="container profile-page">
 
     <!-- Header shows Edit vs Create mode -->
-    <h2><?= $is_edit ? '✏️ Edit Your Profile' : '📝 Complete Your Profile' ?></h2>
+    <h2><?= $is_edit ? '?? Edit Your Profile' : '?? Complete Your Profile' ?></h2>
 
     <?php if($is_edit): ?>
     <div style="background:#e8f5e9;border-left:4px solid #4caf50;padding:10px 16px;margin-bottom:20px;border-radius:4px;">
-        ✅ Your profile is already saved. You can update any field below and save again.
+        ? Your profile is already saved. You can update any field below and save again.
     </div>
     <?php else: ?>
     <div style="background:#fff3e0;border-left:4px solid #ff9800;padding:10px 16px;margin-bottom:20px;border-radius:4px;">
-        ⚠️ Please complete your profile to see accurate scholarship eligibility.
+        ?? Please complete your profile to see accurate scholarship eligibility.
     </div>
     <?php endif; ?>
 
     <?php if($error_message): ?>
-    <div style="color:red;background:#f8d7da;padding:10px;margin-bottom:20px;border-radius:5px;">
-        <?= htmlspecialchars($error_message) ?>
+    <div style="color:red;background:#f8d7da;padding:10px;margin-bottom:20px;border-radius:5px;border-left:4px solid #dc3545;font-weight:500;">
+        <strong>? Error:</strong> <?= htmlspecialchars($error_message) ?>
     </div>
     <?php endif; ?>
 
@@ -173,7 +156,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
             value="<?= htmlspecialchars($profile['email'] ?? '') ?>" required><br><br>
 
         Education Level:
-        <select id="education_level" name="education_level" onchange="toggleBelow10thDropdown()" required>
+        <select id="education_level" name="education_level" onchange="try{toggleBelow10thDropdown();}catch(e){console.error(e);}" required>
             <option value="">Select</option>
             <?php
             $edu = $profile['education_level'] ?? '';
@@ -188,106 +171,53 @@ $saved_district_id = $profile['district_id'] ?? 0;
 
         <!-- Below 10th -->
         <div id="below_10th_dropdown" style="display:none;">
-            <label>Select Standard:</label>
-            <select name="below_10th_level">
-                <option value="">Select Standard</option>
-                <option value="Primary School (Std 1-8)" <?= (strpos($edu,'Primary School')!==false)?'selected':'' ?>>Primary School (Std 1–8)</option>
-                <option value="Secondary School - Appearing (Std 9-10)" <?= (strpos($edu,'Secondary School')!==false)?'selected':'' ?>>Secondary School – Appearing (Std 9–10)</option>
+            <label>Select Class:</label>
+            <select name="below_10th_level" id="below_10th_level">
+                <option value="">Select Class</option>
+                <?php for($i=1; $i<=9; $i++): ?>
+                <option value="Std <?= $i ?>" <?= (strpos($edu,"Std $i")!==false)?'selected':'' ?>>Class <?= $i ?>th</option>
+                <?php endfor; ?>
             </select><br><br>
         </div>
 
         <!-- 10th Pass Stream -->
         <div id="tenth_stream_dropdown" style="display:none;">
             <label>Select Stream:</label>
-            <select id="tenth_stream" name="tenth_stream" onchange="toggleDiplomaDropdown()">
-                <option value="">Select Stream</option>
-                <?php foreach(['Science','Commerce','Arts','Diploma'] as $s): ?>
-                <option value="<?= $s ?>" <?= (strpos($edu,"10th Pass - $s")!==false)?'selected':'' ?>><?= $s ?></option>
-                <?php endforeach; ?>
-            </select><br><br>
-            <div id="diploma_course_dropdown" style="display:none;">
-                <label>Select Diploma Course:</label>
-                <select id="diploma_course" name="diploma_course">
-                    <option value="">Select Diploma Course</option>
-                    <?php
-                    $diplomas = ['Diploma in Engineering (Polytechnic)','Diploma in Computer Engineering / IT',
-                                 'Diploma in Mechanical Engineering','Diploma in Electrical Engineering',
-                                 'Diploma in Civil Engineering','Diploma in Electronics / EC','Other'];
-                    foreach($diplomas as $d):
-                    ?>
-                    <option value="<?= $d ?>" <?= (strpos($edu,$d)!==false)?'selected':'' ?>><?= $d ?></option>
-                    <?php endforeach; ?>
-                </select><br><br>
-            </div>
-        </div>
-
-        <!-- Undergraduate Stream -->
-        <div id="undergrad_stream_dropdown" style="display:none;">
-            <label>Select Stream:</label>
-            <select id="undergrad_stream" name="undergrad_stream" onchange="toggleScienceGroupDropdown()">
+            <select id="tenth_stream" name="tenth_stream">
                 <option value="">Select Stream</option>
                 <?php foreach(['Science','Commerce','Arts'] as $s): ?>
-                <option value="<?= $s ?>" <?= (strpos($edu,"Undergraduate - $s")!==false)?'selected':'' ?>><?= $s ?></option>
+                <option value="<?= $s ?>" <?= (strpos($edu,$s)!==false)?'selected':'' ?>><?= $s ?></option>
                 <?php endforeach; ?>
             </select><br><br>
-            <div id="science_group_dropdown" style="display:none;">
-                <label>Select Science Group:</label>
-                <select id="science_group" name="science_group" onchange="toggleTwelfthCourseDropdown()">
-                    <option value="">Select Group</option>
-                    <option value="Group A" <?= (strpos($edu,'Group A')!==false)?'selected':'' ?>>Group A (Physics, Chemistry, Mathematics)</option>
-                    <option value="Group B" <?= (strpos($edu,'Group B')!==false)?'selected':'' ?>>Group B (Physics, Chemistry, Biology)</option>
-                </select><br><br>
-            </div>
-            <div id="undergrad_course_dropdown" style="display:none;">
-                <label>Select Course:</label>
-                <select id="undergrad_course" name="undergrad_course">
-                    <option value="">Select Course</option>
-                </select><br><br>
-            </div>
+        </div>
+
+        <!-- Undergraduate Course -->
+        <div id="undergrad_course_dropdown" style="display:none;">
+            <label>Select Course:</label>
+            <select id="undergrad_course" name="undergrad_course">
+                <option value="">Select Course</option>
+                <?php foreach(['B.Tech', 'B.Sc', 'B.Com', 'BBA', 'BCA', 'BA', 'B.Arch', 'Other'] as $c): ?>
+                <option value="<?= $c ?>" <?= (strpos($edu,$c)!==false)?'selected':'' ?>><?= $c ?></option>
+                <?php endforeach; ?>
+            </select><br><br>
         </div>
 
         <!-- Postgraduate Course -->
         <div id="postgrad_course_dropdown" style="display:none;">
-            <label>Select Postgraduate Course:</label>
+            <label>Select Course:</label>
             <select id="postgrad_course" name="postgrad_course">
                 <option value="">Select Course</option>
-                <?php
-                $pg_courses = ['M.E. / M.Tech (Engineering)','M.Sc (Science)','M.Com (Commerce)',
-                    'M.A (Arts / Humanities)','MCA (Computer Applications)',
-                    'MBA (Master of Business Administration)',"M.Voc (Vocational Master's)",
-                    'M.Ed (Education)','LLM (Law)','M.Pharm (Pharmacy)','M.Sc Nursing',
-                    'MS (Medical / Clinical)','MPH (Public Health)','MHA (Hospital Administration)',
-                    'MSW (Social Work)','M.Des (Design)','M.Phil',
-                    "Integrated Master's Program",'M.Tech (AI / ML / Data Science / Cyber Security)',
-                    'M.Sc (Data Science / AI / Analytics)','PG Diploma',
-                    "Distance / Online Master's Degree",'Other'];
-                foreach($pg_courses as $c):
-                ?>
-                <option value="<?= $c ?>" <?= ($edu===$c)?'selected':'' ?>><?= $c ?></option>
+                <?php foreach(['M.Tech', 'M.Sc', 'MBA', 'MCA', 'MA', 'M.Com', 'Other'] as $c): ?>
+                <option value="<?= $c ?>" <?= (strpos($edu,$c)!==false)?'selected':'' ?>><?= $c ?></option>
                 <?php endforeach; ?>
             </select><br><br>
         </div>
 
-        <!-- PhD Course -->
-        <div id="phd_course_dropdown" style="display:none;">
-            <label>Select PhD Course:</label>
-            <select id="phd_course" name="phd_course">
-                <option value="">Select Course</option>
-                <?php
-                $phd_courses = ['PhD in Computer Science / IT','PhD in Mechanical Engineering',
-                    'PhD in Civil Engineering','PhD in Electrical Engineering',
-                    'PhD in Electronics & Communication','PhD in Chemical Engineering',
-                    'PhD in Biotechnology Engineering','PhD in Environmental Engineering',
-                    'PhD in Aerospace / Aeronautical Engineering','PhD in Data Science / AI / ML',
-                    'PhD in Mathematics','PhD in Physics','PhD in Chemistry',
-                    'PhD in Biology / Life Sciences','PhD in Environmental Science',
-                    'PhD in Economics','PhD in Management / Business Administration',
-                    'PhD in Commerce','Other'];
-                foreach($phd_courses as $c):
-                ?>
-                <option value="<?= $c ?>" <?= ($edu===$c)?'selected':'' ?>><?= $c ?></option>
-                <?php endforeach; ?>
-            </select><br><br>
+        <!-- PhD Field -->
+        <div id="phd_field_input" style="display:none;">
+            <label>Field of Study:</label>
+            <input type="text" id="phd_field" name="phd_field" placeholder="Field of study"
+                value="<?= htmlspecialchars(str_replace('PhD - ', '', $edu)) ?>"><br><br>
         </div>
 
         <!-- Course / Year for Other -->
@@ -302,7 +232,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
         <input type="number" name="marks" placeholder="Marks (%)" min="0" max="100"
             value="<?= htmlspecialchars($profile['marks'] ?? '') ?>" required><br><br>
 
-        Family Income (₹ per year):
+        Family Income (? per year):
         <input type="number" name="family_income" placeholder="Annual Family Income"
             value="<?= htmlspecialchars($profile['family_income'] ?? '') ?>" required><br><br>
 
@@ -331,7 +261,7 @@ $saved_district_id = $profile['district_id'] ?? 0;
         </select><br><br>
 
         District:
-        <select id="district" name="district_id" required>
+        <select id="district" name="district_id">
             <option value="">Select District</option>
         </select><br><br>
 
@@ -383,39 +313,23 @@ $saved_district_id = $profile['district_id'] ?? 0;
         <input type="tel" name="parent_contact" placeholder="Mobile / Phone"
             value="<?= htmlspecialchars($profile['parent_contact'] ?? '') ?>"><br><br>
 
-        <button type="submit" name="save_profile">
-            <?= $is_edit ? '💾 Update Profile' : '✅ Save Profile' ?>
+        <button type="submit" name="save_profile" value="1">
+            <?= $is_edit ? '?? Update Profile' : '? Save Profile' ?>
         </button>
 
     </form>
 </div>
 
-<footer id="footer">
-    <div>
-        <h4>ScholarMatch</h4>
-        <p>&copy; <?php echo date('Y'); ?> ScholarMatch. All rights reserved.</p>
-    </div>
-    <div>
-        <h4>Quick Links</h4>
-        <ul>
-            <li><a href="index.php">Home</a></li>
-            <li><a href="student_dashboard.php">Dashboard</a></li>
-            <li><a href="login.php">Login</a></li>
-        </ul>
-    </div>
-    <div>
-        <h4>Contact</h4>
-        <p>Email: info@scholarmatch.com</p>
-    </div>
-</footer>
+<?php include "includes/footer.php"; ?>
 
+<script src="assets/js/validation.js?v=<?php echo time(); ?>"></script>
 <script>
 // Saved values from PHP for auto-selecting state/district
 const SAVED_STATE_ID    = <?= intval($saved_state_id) ?>;
 const SAVED_DISTRICT_ID = <?= intval($saved_district_id) ?>;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // ── State dropdown: load all states, then auto-select saved one ──
+    // -- State dropdown: load all states, then auto-select saved one --
     fetch('get_states.php')
         .then(res => res.text())
         .then(html => {
@@ -425,14 +339,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // After selecting state, load its districts then auto-select saved district
                 loadDistricts(SAVED_STATE_ID, SAVED_DISTRICT_ID);
             }
-        });
+        })
+        .catch(err => console.warn('Error loading states:', err));
 
-    // ── State change by user ──
+    // -- State change by user --
     document.getElementById('state').addEventListener('change', function() {
         loadDistricts(this.value, 0);
     });
 
-    // ── Trigger education dropdowns on load ──
+    // -- Trigger education dropdowns on load --
     toggleBelow10thDropdown();
 });
 
@@ -450,92 +365,58 @@ function loadDistricts(stateId, autoSelectDistrictId) {
             if(autoSelectDistrictId > 0) {
                 document.getElementById('district').value = autoSelectDistrictId;
             }
+        })
+        .catch(err => {
+            console.warn('Error loading districts:', err);
+            document.getElementById('district').innerHTML = '<option value="">Error loading districts</option>';
         });
 }
 
 function toggleBelow10thDropdown() {
-    const edu = document.getElementById('education_level').value;
-    const divs = {
-        'below_10th':    ['Below 10th'],
-        'tenth_stream':  ['10th Pass(SSC)'],
-        'undergrad_stream': ['Undergraduate'],
-        'postgrad_course':  ['Postgraduate'],
-        'phd_course':       ['PhD'],
-        'course_year':      ['Other']
-    };
+    try {
+        const edu = document.getElementById('education_level').value;
 
-    hide('below_10th_dropdown');
-    hide('tenth_stream_dropdown');
-    hide('undergrad_stream_dropdown');
-    hide('postgrad_course_dropdown');
-    hide('phd_course_dropdown');
-    hide('course_year_fields');
+        hide('below_10th_dropdown');
+        hide('tenth_stream_dropdown');
+        hide('undergrad_course_dropdown');
+        hide('postgrad_course_dropdown');
+        hide('phd_field_input');
+        hide('course_year_fields');
 
-    if(edu === 'Below 10th')      show('below_10th_dropdown');
-    else if(edu === '10th Pass(SSC)') { show('tenth_stream_dropdown'); toggleDiplomaDropdown(); }
-    else if(edu === 'Undergraduate')  { show('undergrad_stream_dropdown'); toggleScienceGroupDropdown(); }
-    else if(edu === 'Postgraduate')   show('postgrad_course_dropdown');
-    else if(edu === 'PhD')            show('phd_course_dropdown');
-    else if(edu === 'Other')          show('course_year_fields');
-}
-
-function toggleDiplomaDropdown() {
-    const val = document.getElementById('tenth_stream').value;
-    val === 'Diploma' ? show('diploma_course_dropdown') : hide('diploma_course_dropdown');
-}
-
-function toggleScienceGroupDropdown() {
-    const stream = document.getElementById('undergrad_stream').value;
-    hide('science_group_dropdown');
-    hide('undergrad_course_dropdown');
-
-    if(stream === 'Science') {
-        show('science_group_dropdown');
-        toggleTwelfthCourseDropdown();
-    } else if(stream === 'Commerce' || stream === 'Arts') {
-        show('undergrad_course_dropdown');
-        updateCoursesForStream(stream);
+        if(edu === 'Below 10th')      show('below_10th_dropdown');
+        else if(edu === '10th Pass(SSC)') show('tenth_stream_dropdown');
+        else if(edu === 'Undergraduate')  show('undergrad_course_dropdown');
+        else if(edu === 'Postgraduate')   show('postgrad_course_dropdown');
+        else if(edu === 'PhD')            show('phd_field_input');
+        else if(edu === 'Other')          show('course_year_fields');
+    } catch(e) {
+        console.warn('Education dropdown error:', e);
     }
-}
-
-function toggleTwelfthCourseDropdown() {
-    const stream = document.getElementById('undergrad_stream').value;
-    const group  = document.getElementById('science_group').value;
-    if(stream === 'Science' && group) {
-        show('undergrad_course_dropdown');
-        updateCoursesForScienceGroup(group);
-    }
-}
-
-function updateCoursesForScienceGroup(group) {
-    const map = {
-        'Group A': ['B.E. / B.Tech (Engineering)','BCA (Computer Applications)','B.Sc (Science)'],
-        'Group B': ['MBBS / BDS / BAMS / BHMS (Medical)','B.Sc Nursing','B.Pharm (Pharmacy)','B.Sc (Science)']
-    };
-    fillCourseSelect('undergrad_course', map[group] || []);
-}
-
-function updateCoursesForStream(stream) {
-    const map = {
-        'Commerce': ['B.Com (Commerce)','BBA (Business Administration)','Hotel Management / Tourism','B.Ed (Integrated)'],
-        'Arts':     ['B.A (Arts / Humanities)','Fashion Designing / Fine Arts','LLB (Law - 5 Year)','Hotel Management / Tourism','B.Ed (Integrated)']
-    };
-    fillCourseSelect('undergrad_course', map[stream] || []);
-}
-
-function fillCourseSelect(id, courses) {
-    // Preserve previously saved value if it exists
-    const saved = document.getElementById(id).dataset.saved || '';
-    let html = '<option value="">Select Course</option>';
-    courses.forEach(c => {
-        html += `<option value="${c}" ${c === saved ? 'selected' : ''}>${c}</option>`;
-    });
-    document.getElementById(id).innerHTML = html;
 }
 
 function show(id) { const el = document.getElementById(id); if(el) el.style.display = 'block'; }
 function hide(id) { const el = document.getElementById(id); if(el) el.style.display = 'none'; }
+
+// Ensure form can always be submitted
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.profile-form');
+    if(form) {
+        const btn = form.querySelector('button[type="submit"]');
+        if(btn) {
+            btn.addEventListener('click', function(e) {
+                // Allow form submission (disable e.preventDefault)
+                if(form.checkValidity() === false) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                } else {
+                    btn.disabled = false; // Ensure button stays enabled
+                }
+            });
+        }
+    }
+});
 </script>
 
 </body>
 </html>
+
