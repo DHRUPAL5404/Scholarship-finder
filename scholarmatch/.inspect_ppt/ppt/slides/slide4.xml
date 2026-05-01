@@ -1,0 +1,373 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<p:sld xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <p:cSld>
+    <p:bg>
+      <p:bgPr>
+        <a:solidFill>
+          <a:srgbClr val="1A2935" />
+        </a:solidFill>
+      </p:bgPr>
+    </p:bg>
+    <p:spTree>
+      <p:nvGrpSpPr>
+        <p:cNvPr id="1" name="" />
+        <p:cNvGrpSpPr />
+        <p:nvPr />
+      </p:nvGrpSpPr>
+      <p:grpSpPr>
+        <a:xfrm>
+          <a:off x="0" y="0" />
+          <a:ext cx="0" cy="0" />
+          <a:chOff x="0" y="0" />
+          <a:chExt cx="0" cy="0" />
+        </a:xfrm>
+      </p:grpSpPr>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr name="Freeform 2" id="2" />
+          <p:cNvSpPr />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm flipH="false" flipV="false" rot="-10087176">
+            <a:off x="3189187" y="-10712043" />
+            <a:ext cx="14136818" cy="12003443" />
+          </a:xfrm>
+          <a:custGeom>
+            <a:avLst />
+            <a:gdLst />
+            <a:ahLst />
+            <a:cxnLst />
+            <a:rect r="r" b="b" t="t" l="l" />
+            <a:pathLst>
+              <a:path h="12003443" w="14136818">
+                <a:moveTo>
+                  <a:pt x="0" y="0" />
+                </a:moveTo>
+                <a:lnTo>
+                  <a:pt x="14136818" y="0" />
+                </a:lnTo>
+                <a:lnTo>
+                  <a:pt x="14136818" y="12003443" />
+                </a:lnTo>
+                <a:lnTo>
+                  <a:pt x="0" y="12003443" />
+                </a:lnTo>
+                <a:lnTo>
+                  <a:pt x="0" y="0" />
+                </a:lnTo>
+                <a:close />
+              </a:path>
+            </a:pathLst>
+          </a:custGeom>
+          <a:blipFill>
+            <a:blip r:embed="rId2">
+              <a:extLst>
+                <a:ext uri="{96DAC541-7B7A-43D3-8B79-37D633B846F1}">
+                  <asvg:svgBlip r:embed="rId3" xmlns:asvg="http://schemas.microsoft.com/office/drawing/2016/SVG/main" />
+                </a:ext>
+              </a:extLst>
+            </a:blip>
+            <a:stretch>
+              <a:fillRect l="0" t="0" r="0" b="0" />
+            </a:stretch>
+          </a:blipFill>
+        </p:spPr>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr name="TextBox 3" id="3" />
+          <p:cNvSpPr txBox="true" />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm rot="0">
+            <a:off x="2105025" y="1562100" />
+            <a:ext cx="14077950" cy="1055948" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="t" rtlCol="false" tIns="0" lIns="0" bIns="0" rIns="0">
+            <a:spAutoFit />
+          </a:bodyPr>
+          <a:lstStyle />
+          <a:p>
+            <a:pPr algn="ctr" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="8399" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="6999" spc="-139">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Tenor Sans" />
+                <a:ea typeface="Tenor Sans" />
+                <a:cs typeface="Tenor Sans" />
+                <a:sym typeface="Tenor Sans" />
+              </a:rPr>
+              <a:t>Problems Identified</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+      <p:sp>
+        <p:nvSpPr>
+          <p:cNvPr name="TextBox 4" id="4" />
+          <p:cNvSpPr txBox="true" />
+          <p:nvPr />
+        </p:nvSpPr>
+        <p:spPr>
+          <a:xfrm rot="0">
+            <a:off x="1028700" y="3596957" />
+            <a:ext cx="17259300" cy="4150360" />
+          </a:xfrm>
+          <a:prstGeom prst="rect">
+            <a:avLst />
+          </a:prstGeom>
+        </p:spPr>
+        <p:txBody>
+          <a:bodyPr anchor="t" rtlCol="false" tIns="0" lIns="0" bIns="0" rIns="0">
+            <a:spAutoFit />
+          </a:bodyPr>
+          <a:lstStyle />
+          <a:p>
+            <a:pPr algn="l" marL="345439" indent="-172720" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Database Design and Consistency Issues</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>The database design had relational and consistency challenges, causing data discrepancies and query-performance issues.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="345439" indent="-172720" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Button Functionality Problems</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Some buttons were unresponsive due to missing or incorrect handlers, which disrupted user interaction and flow.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="345439" indent="-172720" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Incomplete Form Validation</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Validation gaps on multiple pages led to inconsistent inputs and increased error rates.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="345439" indent="-172720" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Data Update Errors</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>In several modules, records did not update correctly, creating additional inconsistencies.</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="0" indent="0" lvl="0">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l" marL="345439" indent="-172720" lvl="1">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+              <a:buFont typeface="Arial" />
+              <a:buChar char="â€¢" />
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Navigation and Error Handling Issues</a:t>
+            </a:r>
+          </a:p>
+          <a:p>
+            <a:pPr algn="l">
+              <a:lnSpc>
+                <a:spcPts val="2239" />
+              </a:lnSpc>
+            </a:pPr>
+            <a:r>
+              <a:rPr lang="en-US" sz="1599">
+                <a:solidFill>
+                  <a:srgbClr val="FFFFFF" />
+                </a:solidFill>
+                <a:latin typeface="Arimo" />
+                <a:ea typeface="Arimo" />
+                <a:cs typeface="Arimo" />
+                <a:sym typeface="Arimo" />
+              </a:rPr>
+              <a:t>Broken links, incorrect redirects, and unclear error messages made issue resolution difficult for users.</a:t>
+            </a:r>
+          </a:p>
+        </p:txBody>
+      </p:sp>
+    </p:spTree>
+  </p:cSld>
+  <p:clrMapOvr>
+    <a:masterClrMapping />
+  </p:clrMapOvr>
+</p:sld>
